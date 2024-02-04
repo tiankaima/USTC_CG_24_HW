@@ -1,2 +1,7 @@
-AddExeWithFile(1_BasicDArray)
-set_target_properties(1_BasicDArray PROPERTIES ${OUTPUT_PROP})
+project(example)
+add_executable(
+        example
+        main.cpp
+        DArray.cpp
+        DArray.h
+)

@@ -1,87 +1,132 @@
-// implementation of class DArray
+
 #include "DArray.h"
 
-// default constructor
+
 DArray::DArray() {
-	self.Init();
+	this->m_nSize = 0;
+	this->m_pData = nullptr;
 }
 
-// set an array with default values
+
 DArray::DArray(int nSize, double dValue) {
-	//TODO
+	this->m_nSize = nSize;
+	this->m_pData = new double[nSize];
+	for (int i = 0; i < nSize; i++) {
+		this->m_pData[i] = dValue;
+	}
 }
 
 DArray::DArray(const DArray &arr) {
-	//TODO
+	this->m_nSize = arr.m_nSize;
+	this->m_pData = new double[arr.m_nSize];
+	for (int i = 0; i < arr.m_nSize; i++) {
+		this->m_pData[i] = arr.m_pData[i];
+	}
 }
 
-// deconstructor
+
 DArray::~DArray() {
-	Free();
+	delete[] this->m_pData;
+	this->m_pData = nullptr;
+	this->m_nSize = 0;
 }
 
-// display the elements of the array
+
 void DArray::Print() const {
-	//TODO
+	std::cout << "[";
+	for (int i = 0; i < this->m_nSize; i++) {
+		std::cout << this->m_pData[i];
+		if (i < this->m_nSize - 1) {
+			std::cout << ", ";
+		}
+	}
+	std::cout << "]" << std::endl;
 }
 
-// initilize the array
-void DArray::Init() {
-	//TODO
-}
 
-// free the array
-void DArray::Free() {
-	//TODO
-}
-
-// get the size of the array
 int DArray::GetSize() const {
-	//TODO
-	return 0; // you should return a correct value
+	return this->m_nSize;
 }
 
-// set the size of the array
+
 void DArray::SetSize(int nSize) {
-	//TODO
+	delete[] this->m_pData;
+	this->m_pData = new double[nSize];
+	this->m_nSize = nSize;
 }
 
-// get an element at an index
+
 const double &DArray::GetAt(int nIndex) const {
-	//TODO
-	static double ERROR; // you should delete this line
-	return ERROR; // you should return a correct value
+	return this->m_pData[nIndex];
 }
 
-// set the value of an element 
+
 void DArray::SetAt(int nIndex, double dValue) {
-	//TODO
+	this->m_pData[nIndex] = dValue;
 }
 
-// overload operator '[]'
+
 const double &DArray::operator[](int nIndex) const {
-	//TODO
-	static double ERROR; // you should delete this line
-	return ERROR; // you should return a correct value
+	return this->m_pData[nIndex];
 }
 
-// add a new element at the end of the array
+
 void DArray::PushBack(double dValue) {
-	//TODO
+	this->m_nSize++;
+	auto *pNewData = new double[this->m_nSize];
+	for (int i = 0; i < this->m_nSize - 1; i++) {
+		pNewData[i] = this->m_pData[i];
+	}
+	pNewData[this->m_nSize - 1] = dValue;
+	delete[] this->m_pData;
+	this->m_pData = pNewData;
 }
 
-// delete an element at some index
+
 void DArray::DeleteAt(int nIndex) {
-	//TODO
+	if (nIndex < 0 || nIndex >= this->m_nSize) {
+		throw std::out_of_range("Index out of range");
+	}
+	this->m_nSize--;
+	auto *pNewData = new double[this->m_nSize];
+	for (int i = 0; i < nIndex; i++) {
+		pNewData[i] = this->m_pData[i];
+	}
+	for (int i = nIndex; i < this->m_nSize; i++) {
+		pNewData[i] = this->m_pData[i + 1];
+	}
+	delete[] this->m_pData;
+	this->m_pData = pNewData;
 }
 
-// insert a new element at some index
+
 void DArray::InsertAt(int nIndex, double dValue) {
-	//TODO
+	if (nIndex < 0 || nIndex > this->m_nSize) {
+		throw std::out_of_range("Index out of range");
+	}
+	this->m_nSize++;
+	auto *pNewData = new double[this->m_nSize];
+	for (int i = 0; i < nIndex; i++) {
+		pNewData[i] = this->m_pData[i];
+	}
+	pNewData[nIndex] = dValue;
+	for (int i = nIndex + 1; i < this->m_nSize; i++) {
+		pNewData[i] = this->m_pData[i - 1];
+	}
+	delete[] this->m_pData;
+	this->m_pData = pNewData;
 }
 
-// overload operator '='
+
 DArray &DArray::operator =(const DArray &arr) {
-	//TODO
+	if (this == &arr) {
+		return *this;
+	}
+	delete[] this->m_pData;
+	this->m_nSize = arr.m_nSize;
+	this->m_pData = new double[arr.m_nSize];
+	for (int i = 0; i < arr.m_nSize; i++) {
+		this->m_pData[i] = arr.m_pData[i];
+	}
 	return *this;
 }

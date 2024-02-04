@@ -1,35 +1,40 @@
 #pragma once
+#include "iostream"
 
-// interfaces of Dynamic Array class DArray
+
 class DArray {
 public:
-	DArray(); // default constructor
-	DArray(int nSize, double dValue = 0); // set an array with default values
-	DArray(const DArray &arr); // copy constructor
-	~DArray(); // deconstructor
+	DArray();
 
-	void Print() const; // print the elements of the array
+	DArray(int nSize, double dValue = 0);
 
-	int GetSize() const; // get the size of the array
-	void SetSize(int nSize); // set the size of the array
+	DArray(const DArray &arr);
 
-	const double &GetAt(int nIndex) const; // get an element at an index
-	void SetAt(int nIndex, double dValue); // set the value of an element
+	~DArray();
 
-	double &operator[](int nIndex); // overload operator '[]'
-	const double &operator[](int nIndex) const; // overload operator '[]'
+	void Print() const;
 
-	void PushBack(double dValue); // add a new element at the end of the array
-	void DeleteAt(int nIndex); // delete an element at some index
-	void InsertAt(int nIndex, double dValue); // insert a new element at some index
+	int GetSize() const;
 
-	DArray &operator =(const DArray &arr); //overload operator '='
+	void SetSize(int nSize);
+
+	const double &GetAt(int nIndex) const;
+
+	void SetAt(int nIndex, double dValue);
+
+	double &operator[](int nIndex);
+
+	const double &operator[](int nIndex) const;
+
+	void PushBack(double dValue);
+
+	void DeleteAt(int nIndex);
+
+	void InsertAt(int nIndex, double dValue);
+
+	DArray &operator =(const DArray &arr);
 
 private:
-	double *m_pData; // the pointer to the array memory
-	int m_nSize; // the size of the array
-
-private:
-	void Init(); // initilize the array
-	void Free(); // free the array
+	double *m_pData;
+	int m_nSize;
 };
