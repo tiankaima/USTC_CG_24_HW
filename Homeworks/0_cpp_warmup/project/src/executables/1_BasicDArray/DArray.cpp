@@ -3,7 +3,7 @@
 
 // default constructor
 DArray::DArray() {
-	Init();
+	self.Init();
 }
 
 // set an array with default values
@@ -11,7 +11,7 @@ DArray::DArray(int nSize, double dValue) {
 	//TODO
 }
 
-DArray::DArray(const DArray& arr) {
+DArray::DArray(const DArray &arr) {
 	//TODO
 }
 
@@ -47,7 +47,7 @@ void DArray::SetSize(int nSize) {
 }
 
 // get an element at an index
-const double& DArray::GetAt(int nIndex) const {
+const double &DArray::GetAt(int nIndex) const {
 	//TODO
 	static double ERROR; // you should delete this line
 	return ERROR; // you should return a correct value
@@ -59,7 +59,7 @@ void DArray::SetAt(int nIndex, double dValue) {
 }
 
 // overload operator '[]'
-const double& DArray::operator[](int nIndex) const {
+const double &DArray::operator[](int nIndex) const {
 	//TODO
 	static double ERROR; // you should delete this line
 	return ERROR; // you should return a correct value
@@ -81,7 +81,7 @@ void DArray::InsertAt(int nIndex, double dValue) {
 }
 
 // overload operator '='
-DArray& DArray::operator = (const DArray& arr) {
+DArray &DArray::operator =(const DArray &arr) {
 	//TODO
 	return *this;
 }

@@ -4,7 +4,8 @@
 
 本项目目录包含以下若干子目录：
 
-- `cmake`: 编译配置文件。须熟读 [CMakeLists.txt](CMakeLists.txt/)，理解每一行代码的含义，若不理解则借助注释、搜索和[官方文档](https://cmake.org/documentation/)
+- `cmake`: 编译配置文件。须熟读 [CMakeLists.txt](CMakeLists.txt/)
+  ，理解每一行代码的含义，若不理解则借助注释、搜索和[官方文档](https://cmake.org/documentation/)
 - `bin`: 为项目程序默认的工作路径，及编译生成的可执行文件`*.exe`放于该目录中
 - `data`: 存放本次作业项目的数据；注：第 4 个小练习读取文件提供的相对路径为 `../data/xxx`
 - `include`: 一般放置公用的库头文件，在代码中通过`#include <*.h>`来引用，须通过头文件路径设置才能找到
@@ -34,7 +35,8 @@
 
 - 添加文件 `TemplateDArray.h`
 - 添加文件 `main.cpp`
-- 添加文件 `CMakeLists.txt`，同于 [src/executables/1_BasicDArray/CMakeLists.txt](src/executables/1_BasicDArray/CMakeLists.txt)
+- 添加文件 `CMakeLists.txt`
+  ，同于 [src/executables/1_BasicDArray/CMakeLists.txt](src/executables/1_BasicDArray/CMakeLists.txt)
 
 重新 CMake 后得到新子项目 3_TemplateDArray
 
@@ -42,7 +44,8 @@
 
 > 详细说明见于 [documents/4_list_Polynomial](../documents/4_list_Polynomial)
 
-这里将 PolynomialList 编写成了动态库，具体查看 [src/libraries/shared](src/libraries/shared)，编译后会生成 [lib/](lib)CppPractices_libraries_shared(d).dll
+这里将 PolynomialList 编写成了动态库，具体查看 [src/libraries/shared](src/libraries/shared)，编译后会生成 [lib/](lib)
+CppPractices_libraries_shared(d).dll
 
 你需要补充完成 [src/libraries/shared/PolynomialList.cpp](src/libraries/shared/PolynomialList.cpp)
 
@@ -52,8 +55,10 @@
 
 > 详细说明见于 [documents/5_map_Polynomial](../documents/5_map_Polynomial)
 
-这里将 PolynomialMap 编写成了静态库，具体查看 [src/libraries/static](src/libraries/static)，编译后会生成 [lib/](lib)CppPractices_libraries_static(d).dll
+这里将 PolynomialMap 编写成了静态库，具体查看 [src/libraries/static](src/libraries/static)，编译后会生成 [lib/](lib)
+CppPractices_libraries_static(d).dll
 
 你需要补充完成 [src/libraries/static/PolynomialMap.cpp](src/libraries/static/PolynomialMap.cpp)
 
-[5_map_Polynomial](src/executables/5_map_Polynomial) 会测试该静态库，另外该子项目还用到了小练习 4 的动态库 PolynomialList，其中会测试小练习 4 和小练习 5 的性能差异
+[5_map_Polynomial](src/executables/5_map_Polynomial) 会测试该静态库，另外该子项目还用到了小练习 4 的动态库
+PolynomialList，其中会测试小练习 4 和小练习 5 的性能差异
