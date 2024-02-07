@@ -1,6 +1,6 @@
-project(hw_0_1)
+project(1_BasicDArray)
 add_executable(
-        hw_0_1
+        1_BasicDArray
         main.cpp
         DArray.cpp
         DArray.h

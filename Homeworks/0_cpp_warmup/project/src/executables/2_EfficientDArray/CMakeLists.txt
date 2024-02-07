@@ -1,7 +1,7 @@
-project(hw_0_2)
+project(2_EfficientDArray)
 add_executable(
-        hw_0_2
+        2_EfficientDArray
         main.cpp
-        DArray.cpp
-        DArray.h
+        EDArray.h
+        EDArray.cpp
 )

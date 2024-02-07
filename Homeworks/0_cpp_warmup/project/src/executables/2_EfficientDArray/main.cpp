@@ -1,7 +1,7 @@
-#include "DArray.h"
+#include "EDArray.h"
 
-int main(int argc, char** argv) {
-	DArray a;
+int main(int argc, char **argv) {
+	EDArray a;
 	a.InsertAt(0, 2.1);
 	a.Print();
 
@@ -15,18 +15,18 @@ int main(int argc, char** argv) {
 	a.InsertAt(0, 4.1);
 	a.Print();
 
-	DArray acopy = a; // 此处用到了拷贝构造函数
+	EDArray acopy = a;
 	acopy.Print();
 
-	DArray acopy2(a); // 该语句等同于上面的语句，都是初始化
+	EDArray acopy2(a);
 	acopy2.Print();
 
-	DArray acopy3, acopy4;
-	acopy4 = acopy3 = a; // 此处用到了赋值操作符号"="的重载
+	EDArray acopy3, acopy4;
+	acopy4 = acopy3 = a;
 	acopy3.Print();
 	acopy4.Print();
 
-	DArray b;
+	EDArray b;
 	b.PushBack(21);
 	b.Print();
 	b.DeleteAt(0);
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 	b.SetSize(5);
 	b.Print();
 
-	DArray c;
+	EDArray c;
 	c.PushBack('a');
 	c.PushBack('b');
 	c.PushBack('c');
