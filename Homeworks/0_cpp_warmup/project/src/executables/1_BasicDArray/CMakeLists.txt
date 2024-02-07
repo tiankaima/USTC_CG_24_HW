@@ -1,6 +1,6 @@
-project(example)
+project(hw_0_1)
 add_executable(
-        example
+        hw_0_1
         main.cpp
         DArray.cpp
         DArray.h
