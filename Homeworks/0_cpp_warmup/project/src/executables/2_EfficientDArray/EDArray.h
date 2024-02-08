@@ -6,7 +6,7 @@ class EDArray {
 public:
 	EDArray();
 
-	EDArray(int nSize, double dValue = 0);
+	explicit EDArray(int nSize, double dValue = 0);
 
 	EDArray(const EDArray &arr);
 
@@ -14,11 +14,11 @@ public:
 
 	void Print() const;
 
-	int GetSize() const;
+	[[nodiscard]] int GetSize() const;
 
 	void SetSize(int nSize);
 
-	const double &GetAt(int nIndex) const;
+	[[nodiscard]] const double &GetAt(int nIndex) const;
 
 	void SetAt(int nIndex, double dValue);
 

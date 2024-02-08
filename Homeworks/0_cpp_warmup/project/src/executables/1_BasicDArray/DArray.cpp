@@ -61,10 +61,14 @@ const double &DArray::GetAt(int nIndex) const {
 }
 
 
-void DArray::SetAt(int nIndex, double dValue) {
+void DArray::SetAt(int nIndex, double dValue) const {
 	this->m_pData[nIndex] = dValue;
 }
 
+double &DArray::operator[](int nIndex) {
+	double &ref = this->m_pData[nIndex];
+	return ref;
+}
 
 const double &DArray::operator[](int nIndex) const {
 	return this->m_pData[nIndex];

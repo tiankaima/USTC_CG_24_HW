@@ -6,7 +6,7 @@ class DArray {
 public:
 	DArray();
 
-	DArray(int nSize, double dValue = 0);
+	explicit DArray(int nSize, double dValue = 0);
 
 	DArray(const DArray &arr);
 
@@ -14,13 +14,13 @@ public:
 
 	void Print() const;
 
-	int GetSize() const;
+	[[nodiscard]] int GetSize() const;
 
 	void SetSize(int nSize);
 
-	const double &GetAt(int nIndex) const;
+	[[nodiscard]] const double &GetAt(int nIndex) const;
 
-	void SetAt(int nIndex, double dValue);
+	void SetAt(int nIndex, double dValue) const;
 
 	double &operator[](int nIndex);
 
