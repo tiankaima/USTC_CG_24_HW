@@ -19,6 +19,7 @@ EDArray::EDArray(int nSize, double dValue) {
 }
 
 EDArray::EDArray(const EDArray &arr) {
+	// only allocate required ones.
 	this->m_pData = new double[arr.m_nSize];
 	this->m_nSize = arr.m_nSize;
 	this->m_nMax = arr.m_nSize;
@@ -81,21 +82,24 @@ const double &EDArray::GetAt(int nIndex) const {
 }
 
 
-void EDArray::SetAt(int nIndex, double dValue) {
+void EDArray::SetAt(int nIndex, double dValue) const {
 	this->m_pData[nIndex] = dValue;
 }
 
 
 double &EDArray::operator[](int nIndex) {
-
+	double &ref = this->m_pData[nIndex];
+	return ref;
 }
 
 
 const double &EDArray::operator[](int nIndex) const {
+	return this->m_pData[nIndex];
 }
 
 
 void EDArray::PushBack(double dValue) {
+
 }
 
 

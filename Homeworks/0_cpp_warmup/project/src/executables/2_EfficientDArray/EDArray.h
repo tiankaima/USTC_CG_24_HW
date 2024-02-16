@@ -20,7 +20,7 @@ public:
 
 	[[nodiscard]] const double &GetAt(int nIndex) const;
 
-	void SetAt(int nIndex, double dValue);
+	void SetAt(int nIndex, double dValue) const;
 
 	double &operator[](int nIndex);
 
@@ -36,6 +36,6 @@ public:
 
 private:
 	double *m_pData;
-	int m_nSize;
-	int m_nMax;
+	int m_nSize; // number of elements
+	int m_nMax; // size of allocated memory
 };
