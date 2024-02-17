@@ -6,35 +6,38 @@ class DArray {
 public:
 	DArray();
 
-	explicit DArray(int nSize, double dValue = 0);
+	explicit DArray(int size, double data = 0);
 
 	DArray(const DArray &arr);
 
 	~DArray();
 
+	DArray &operator =(const DArray &arr);
+
+	friend auto operator<<(std::ostream &os, const DArray &arr) -> std::ostream &;
+
+	double &operator[](int index);
+
+	const double &operator[](int index) const;
+
+public: // non-standard interfaces
 	void Print() const;
 
 	[[nodiscard]] int GetSize() const;
 
-	void SetSize(int nSize);
+	void SetSize(int size);
 
-	[[nodiscard]] const double &GetAt(int nIndex) const;
+	[[nodiscard]] const double &GetAt(int index) const;
 
-	void SetAt(int nIndex, double dValue) const;
+	void SetAt(int index, double value) const;
 
-	double &operator[](int nIndex);
+	void PushBack(double value);
 
-	const double &operator[](int nIndex) const;
+	void DeleteAt(int index);
 
-	void PushBack(double dValue);
-
-	void DeleteAt(int nIndex);
-
-	void InsertAt(int nIndex, double dValue);
-
-	DArray &operator =(const DArray &arr);
+	void InsertAt(int index, double value);
 
 private:
-	double *m_pData;
-	int m_nSize;
+	int size;
+	double *data;
 };

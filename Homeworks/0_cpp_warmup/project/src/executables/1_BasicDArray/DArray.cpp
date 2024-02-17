@@ -1,42 +1,67 @@
-
 #include "DArray.h"
 
-
-DArray::DArray() {
-	this->m_nSize = 0;
-	this->m_pData = nullptr;
+DArray::DArray(): size(0), data(nullptr) {
 }
 
-
-DArray::DArray(int nSize, double dValue) {
-	this->m_nSize = nSize;
-	this->m_pData = new double[nSize];
-	for (int i = 0; i < nSize; i++) {
-		this->m_pData[i] = dValue;
+DArray::DArray(int size, double data): size(size), data(new double[size]) {
+	for (int i = 0; i < size; i++) {
+		this->data[i] = data;
 	}
 }
 
-DArray::DArray(const DArray &arr) {
-	this->m_nSize = arr.m_nSize;
-	this->m_pData = new double[arr.m_nSize];
-	for (int i = 0; i < arr.m_nSize; i++) {
-		this->m_pData[i] = arr.m_pData[i];
+DArray::DArray(const DArray &arr): size(arr.size), data(new double[arr.size]) {
+	for (int i = 0; i < arr.size; i++) {
+		this->data[i] = arr.data[i];
 	}
 }
-
 
 DArray::~DArray() {
-	delete[] this->m_pData;
-	this->m_pData = nullptr;
-	this->m_nSize = 0;
+	delete[] this->data;
+	this->data = nullptr;
+	this->size = 0;
+}
+
+DArray &DArray::operator =(const DArray &arr) {
+	if (this == &arr) {
+		return *this;
+	}
+	delete[] this->data;
+	this->size = arr.size;
+	this->data = new double[arr.size];
+	for (int i = 0; i < arr.size; i++) {
+		this->data[i] = arr.data[i];
+	}
+	return *this;
+}
+
+auto operator<<(std::ostream &os, const DArray &arr) -> std::ostream & {
+	os << "[";
+	for (int i = 0; i < arr.size; i++) {
+		os << arr.data[i];
+		if (i < arr.size - 1) {
+			os << ", ";
+		}
+	}
+	os << "]" << std::endl;
+	return os;
+}
+
+
+double &DArray::operator[](int index) {
+	double &ref = this->data[index];
+	return ref;
+}
+
+const double &DArray::operator[](int index) const {
+	return this->data[index];
 }
 
 
 void DArray::Print() const {
 	std::cout << "[";
-	for (int i = 0; i < this->m_nSize; i++) {
-		std::cout << this->m_pData[i];
-		if (i < this->m_nSize - 1) {
+	for (int i = 0; i < this->size; i++) {
+		std::cout << this->data[i];
+		if (i < this->size - 1) {
 			std::cout << ", ";
 		}
 	}
@@ -45,92 +70,64 @@ void DArray::Print() const {
 
 
 int DArray::GetSize() const {
-	return this->m_nSize;
+	return this->size;
+}
+
+void DArray::SetSize(int size) {
+	delete[] this->data;
+	this->data = new double[size];
+	this->size = size;
+}
+
+const double &DArray::GetAt(int index) const {
+	return this->data[index];
+}
+
+void DArray::SetAt(int index, double value) const {
+	this->data[index] = value;
 }
 
 
-void DArray::SetSize(int nSize) {
-	delete[] this->m_pData;
-	this->m_pData = new double[nSize];
-	this->m_nSize = nSize;
-}
-
-
-const double &DArray::GetAt(int nIndex) const {
-	return this->m_pData[nIndex];
-}
-
-
-void DArray::SetAt(int nIndex, double dValue) const {
-	this->m_pData[nIndex] = dValue;
-}
-
-double &DArray::operator[](int nIndex) {
-	double &ref = this->m_pData[nIndex];
-	return ref;
-}
-
-const double &DArray::operator[](int nIndex) const {
-	return this->m_pData[nIndex];
-}
-
-
-void DArray::PushBack(double dValue) {
-	this->m_nSize++;
-	auto *pNewData = new double[this->m_nSize];
-	for (int i = 0; i < this->m_nSize - 1; i++) {
-		pNewData[i] = this->m_pData[i];
+void DArray::PushBack(double value) {
+	this->size++;
+	auto *pNewData = new double[this->size];
+	for (int i = 0; i < this->size - 1; i++) {
+		pNewData[i] = this->data[i];
 	}
-	pNewData[this->m_nSize - 1] = dValue;
-	delete[] this->m_pData;
-	this->m_pData = pNewData;
+	pNewData[this->size - 1] = value;
+	delete[] this->data;
+	this->data = pNewData;
 }
 
-
-void DArray::DeleteAt(int nIndex) {
-	if (nIndex < 0 || nIndex >= this->m_nSize) {
+void DArray::DeleteAt(int index) {
+	if (index < 0 || index >= this->size) {
 		throw std::out_of_range("Index out of range");
 	}
-	this->m_nSize--;
-	auto *pNewData = new double[this->m_nSize];
-	for (int i = 0; i < nIndex; i++) {
-		pNewData[i] = this->m_pData[i];
+	this->size--;
+	auto *pNewData = new double[this->size];
+	for (int i = 0; i < index; i++) {
+		pNewData[i] = this->data[i];
 	}
-	for (int i = nIndex; i < this->m_nSize; i++) {
-		pNewData[i] = this->m_pData[i + 1];
+	for (int i = index; i < this->size; i++) {
+		pNewData[i] = this->data[i + 1];
 	}
-	delete[] this->m_pData;
-	this->m_pData = pNewData;
+	delete[] this->data;
+	this->data = pNewData;
 }
 
-
-void DArray::InsertAt(int nIndex, double dValue) {
-	if (nIndex < 0 || nIndex > this->m_nSize) {
+void DArray::InsertAt(int index, double value) {
+	if (index < 0 || index > this->size) {
 		throw std::out_of_range("Index out of range");
 	}
-	this->m_nSize++;
-	auto *pNewData = new double[this->m_nSize];
-	for (int i = 0; i < nIndex; i++) {
-		pNewData[i] = this->m_pData[i];
+	this->size++;
+	auto *pNewData = new double[this->size];
+	for (int i = 0; i < index; i++) {
+		pNewData[i] = this->data[i];
 	}
-	pNewData[nIndex] = dValue;
-	for (int i = nIndex + 1; i < this->m_nSize; i++) {
-		pNewData[i] = this->m_pData[i - 1];
+	pNewData[index] = value;
+	for (int i = index + 1; i < this->size; i++) {
+		pNewData[i] = this->data[i - 1];
 	}
-	delete[] this->m_pData;
-	this->m_pData = pNewData;
-}
-
-
-DArray &DArray::operator =(const DArray &arr) {
-	if (this == &arr) {
-		return *this;
-	}
-	delete[] this->m_pData;
-	this->m_nSize = arr.m_nSize;
-	this->m_pData = new double[arr.m_nSize];
-	for (int i = 0; i < arr.m_nSize; i++) {
-		this->m_pData[i] = arr.m_pData[i];
-	}
-	return *this;
+	delete[] this->data;
+	this->data = pNewData;
 }
