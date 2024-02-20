@@ -4,31 +4,28 @@
 #include <string>
 #include <vector>
 
-class PolynomialMap
-{
+class PolynomialMap {
 public:
     PolynomialMap() { }
     PolynomialMap(const PolynomialMap& other);
-    PolynomialMap(const std::string& file); // initialization using file
-    PolynomialMap(const double* cof, const int* deg, int n);
-    PolynomialMap(const std::vector<int>& deg, const std::vector<double>& cof);
+    PolynomialMap(const std::string& file);
+    PolynomialMap(const double* coefficent, const int* degree, int n);
+    PolynomialMap(const std::vector<double>& coefficent, const std::vector<int>& degree);
 
-    double& coff(int i);
-    double coff(int i) const;
+    double& coefficent(int i);
+    double cofficent(int i) const;
 
     void compress();
 
-    // overload
-    PolynomialMap operator+(const PolynomialMap& right) const; //Overload operator +
-    PolynomialMap operator-(const PolynomialMap& right) const; //Overload operator -
-    PolynomialMap operator*(const PolynomialMap& right) const; //Overload operator *
-    PolynomialMap& operator=(const PolynomialMap& right); //Overload operator =
+    PolynomialMap operator+(const PolynomialMap& right) const;
+    PolynomialMap operator-(const PolynomialMap& right) const;
+    PolynomialMap operator*(const PolynomialMap& right) const;
+    PolynomialMap& operator=(const PolynomialMap& right);
+
+    friend auto operator<<(std::ostream& os, const PolynomialMap& poly) -> std::ostream&;
 
     void Print() const;
 
 private:
-    bool ReadFromFile(const std::string& file);
-
-private:
-    std::map<int, double> m_Polynomial; // deg -> cof
+    std::map<int, double> polynomial;
 };

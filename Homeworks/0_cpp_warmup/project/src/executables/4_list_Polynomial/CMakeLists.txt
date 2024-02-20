@@ -1,3 +1,5 @@
+project(4_list_Polynomial)
+
 add_executable(4_list_Polynomial main.cpp)
 
 target_include_directories(4_list_Polynomial PUBLIC ${PROJECT_SOURCE_DIR}/include)

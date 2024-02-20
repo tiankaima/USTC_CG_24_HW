@@ -10,7 +10,7 @@
 using namespace std;
 
 PolynomialMap::PolynomialMap(const PolynomialMap& other) {
-    m_Polynomial = other.m_Polynomial;
+    polynomial = other.polynomial;
 }
 
 PolynomialMap::PolynomialMap(const string& file) {
@@ -19,43 +19,43 @@ PolynomialMap::PolynomialMap(const string& file) {
 
 PolynomialMap::PolynomialMap(const double* cof, const int* deg, int n) {
     for (int i = 0; i < n; i++)
-        coff(deg[i]) = cof[i];
+        coefficent(deg[i]) = cof[i];
 }
 
 PolynomialMap::PolynomialMap(const vector<int>& deg, const vector<double>& cof) {
     assert(deg.size() == cof.size());
 
     for (size_t i = 0; i < deg.size(); i++)
-        coff(deg[i]) = cof[i];
+        coefficent(deg[i]) = cof[i];
 }
 
-double PolynomialMap::coff(int i) const
+double PolynomialMap::cofficent(int i) const
 {
-    auto target = m_Polynomial.find(i);
-    if (target == m_Polynomial.end())
+    auto target = polynomial.find(i);
+    if (target == polynomial.end())
         return 0.;
 
     return target->second;
 }
 
-double& PolynomialMap::coff(int i) {
-    return m_Polynomial[i];
+double& PolynomialMap::coefficent(int i) {
+    return polynomial[i];
 }
 
 void PolynomialMap::compress() {
     /// Safe but not effective method--- to study stl for getting more effective method
-    map<int, double> tmpPoly = m_Polynomial;
-    m_Polynomial.clear();
+    map<int, double> tmpPoly = polynomial;
+    polynomial.clear();
     for (const auto& term : tmpPoly) {
         if (fabs(term.second) > EPSILON)
-            coff(term.first) = term.second;
+            coefficent(term.first) = term.second;
     }
 }
 
 PolynomialMap PolynomialMap::operator+(const PolynomialMap& right) const {
     PolynomialMap poly(right);
-    for (const auto& term : m_Polynomial)
-        poly.coff(term.first) += term.second;
+    for (const auto& term : polynomial)
+        poly.coefficent(term.first) += term.second;
 
     poly.compress();
     return poly;
@@ -63,8 +63,8 @@ PolynomialMap PolynomialMap::operator+(const PolynomialMap& right) const {
 
 PolynomialMap PolynomialMap::operator-(const PolynomialMap& right) const {
     PolynomialMap poly(right);
-    for (const auto& term : m_Polynomial)
-        poly.coff(term.first) -= term.second;
+    for (const auto& term : polynomial)
+        poly.coefficent(term.first) -= term.second;
 
     poly.compress();
     return poly;
@@ -72,30 +72,30 @@ PolynomialMap PolynomialMap::operator-(const PolynomialMap& right) const {
 
 PolynomialMap PolynomialMap::operator*(const PolynomialMap& right) const {
     PolynomialMap poly;
-    for (const auto& term1 : m_Polynomial) {
-        for (const auto& term2 : right.m_Polynomial) {
+    for (const auto& term1 : polynomial) {
+        for (const auto& term2 : right.polynomial) {
             int deg = term1.first + term2.first;
             double cof = term1.second * term2.second;
-            poly.coff(deg) += cof;
+            poly.coefficent(deg) += cof;
         }
     }
     return poly;
 }
 
 PolynomialMap& PolynomialMap::operator=(const PolynomialMap& right) {
-    m_Polynomial = right.m_Polynomial;
+    polynomial = right.polynomial;
     return *this;
 }
 
 void PolynomialMap::Print() const {
-    auto itr = m_Polynomial.begin();
-    if (itr == m_Polynomial.end()) {
+    auto itr = polynomial.begin();
+    if (itr == polynomial.end()) {
         cout << "0" << endl;
         return;
     }
 
-    for (; itr != m_Polynomial.end(); itr++) {
-        if (itr != m_Polynomial.begin()) {
+    for (; itr != polynomial.end(); itr++) {
+        if (itr != polynomial.begin()) {
             cout << " ";
             if (itr->second > 0)
                 cout << "+";
@@ -111,7 +111,7 @@ void PolynomialMap::Print() const {
 
 bool PolynomialMap::ReadFromFile(const string& file)
 {
-    m_Polynomial.clear();
+    polynomial.clear();
 
     ifstream inp;
     inp.open(file.c_str());
@@ -130,7 +130,7 @@ bool PolynomialMap::ReadFromFile(const string& file)
         double cof;
         inp >> deg;
         inp >> cof;
-        coff(deg) = cof;
+        coefficent(deg) = cof;
     }
 
     inp.close();

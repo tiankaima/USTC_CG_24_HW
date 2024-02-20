@@ -5,6 +5,8 @@
 
 #include <assert.h>
 
+#include <cstring>
+
 using namespace std;
 
 // default constructor

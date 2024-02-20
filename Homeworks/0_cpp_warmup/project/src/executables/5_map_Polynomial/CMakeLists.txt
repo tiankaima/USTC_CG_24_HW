@@ -1,3 +1,5 @@
+project(5_map_Polynomial)
+
 add_executable(5_map_Polynomial test.cpp)
 
 target_include_directories(5_map_Polynomial PUBLIC ${PROJECT_SOURCE_DIR}/include)

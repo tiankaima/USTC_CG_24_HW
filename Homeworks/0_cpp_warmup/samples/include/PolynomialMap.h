@@ -13,8 +13,8 @@ public:
     PolynomialMap(const double* cof, const int* deg, int n);
     PolynomialMap(const std::vector<int>& deg, const std::vector<double>& cof);
 
-    double& coff(int i);
-    double coff(int i) const;
+    double& coefficent(int i);
+    double cofficent(int i) const;
 
     void compress();
 
@@ -30,5 +30,5 @@ private:
     bool ReadFromFile(const std::string& file);
 
 private:
-    std::map<int, double> m_Polynomial; // deg -> cof
+    std::map<int, double> polynomial; // deg -> cof
 };

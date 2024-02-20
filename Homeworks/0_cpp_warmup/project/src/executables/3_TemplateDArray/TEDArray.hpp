@@ -1,7 +1,7 @@
 #pragma once
 
-#include "cassert"
-#include "iostream"
+#include <cassert>
+#include <iostream>
 
 template <class T = double>
 class TEDArray {
