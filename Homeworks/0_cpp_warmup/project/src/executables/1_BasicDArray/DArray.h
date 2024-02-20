@@ -1,43 +1,47 @@
 #pragma once
 
+#include "cassert"
 #include "iostream"
 
 class DArray {
 public:
-	DArray();
+    DArray();
 
-	explicit DArray(int size, double data = 0);
+    explicit DArray(int size, double data = 0);
 
-	DArray(const DArray &arr);
+    DArray(const DArray& arr);
 
-	~DArray();
+    ~DArray();
 
-	DArray &operator =(const DArray &arr);
+    DArray& operator=(const DArray& arr);
 
-	friend auto operator<<(std::ostream &os, const DArray &arr) -> std::ostream &;
+    friend auto operator<<(std::ostream& os, const DArray& arr) -> std::ostream&;
 
-	double &operator[](int index);
+    double& operator[](int index);
 
-	const double &operator[](int index) const;
+    const double& operator[](int index) const;
 
-public: // non-standard interfaces
-	void Print() const;
+    //! non-standard interfaces
 
-	[[nodiscard]] int GetSize() const;
+    [[nodiscard]] int GetSize() const;
 
-	void SetSize(int size);
+    void SetSize(int size);
 
-	[[nodiscard]] const double &GetAt(int index) const;
+    void PushBack(double value);
 
-	void SetAt(int index, double value) const;
+    void DeleteAt(int index);
 
-	void PushBack(double value);
+    void InsertAt(int index, double value);
 
-	void DeleteAt(int index);
+    //! alternative available for the following methods
 
-	void InsertAt(int index, double value);
+    void Print() const; // use cout<< instead.
+
+    [[nodiscard]] double& GetAt(int index) const; // use operator[] instead.
+
+    const void SetAt(int index, double value) const; // use operator[] instead.
 
 private:
-	int size;
-	double *data;
+    int size;
+    double* data;
 };

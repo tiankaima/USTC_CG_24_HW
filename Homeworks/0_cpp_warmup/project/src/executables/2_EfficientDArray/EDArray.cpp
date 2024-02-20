@@ -1,116 +1,188 @@
-
 #include "EDArray.h"
+#include <cassert>
 
-
-EDArray::EDArray() {
-	this->m_pData = nullptr;
-	this->m_nSize = 0;
-	this->m_nMax = 0;
+EDArray::EDArray()
+    : data(nullptr)
+    , size(0)
+    , allocated_size(0)
+{
 }
 
-
-EDArray::EDArray(int nSize, double dValue) {
-	this->m_pData = new double[nSize];
-	this->m_nSize = nSize;
-	this->m_nMax = nSize;
-	for (int i = 0; i < nSize; i++) {
-		this->m_pData[i] = dValue;
-	}
+EDArray::EDArray(int size, double value)
+    : data(new double[size])
+    , size(size)
+    , allocated_size(size)
+{
+    for (int i = 0; i < size; i++) {
+        this->data[i] = value;
+    }
 }
 
-EDArray::EDArray(const EDArray &arr) {
-	// only allocate required ones.
-	this->m_pData = new double[arr.m_nSize];
-	this->m_nSize = arr.m_nSize;
-	this->m_nMax = arr.m_nSize;
-	for (int i = 0; i < arr.m_nSize; i++) {
-		this->m_pData[i] = arr.m_pData[i];
-	}
+EDArray::EDArray(const EDArray& arr)
+    : data(new double[arr.size])
+    , size(arr.size)
+    , allocated_size(arr.size)
+{
+    for (int i = 0; i < arr.size; i++) {
+        this->data[i] = arr.data[i];
+    }
 }
 
-
-EDArray::~EDArray() {
-	delete[] this->m_pData;
-	this->m_pData = nullptr;
-	this->m_nSize = 0;
-	this->m_nMax = 0;
+EDArray::~EDArray()
+{
+    delete[] this->data;
+    this->data = nullptr;
+    this->size = 0;
+    this->allocated_size = 0;
 }
 
-
-void EDArray::Print() const {
-	std::cout << "[";
-	for (int i = 0; i < this->m_nSize; i++) {
-		std::cout << this->m_pData[i];
-		if (i < this->m_nSize - 1) {
-			std::cout << ", ";
-		}
-	}
-	std::cout << "]" << std::endl;
+EDArray& EDArray::operator=(const EDArray& arr)
+{
+    if (this == &arr) {
+        return *this;
+    }
+    delete[] this->data;
+    this->size = arr.size;
+    this->data = new double[arr.size];
+    for (int i = 0; i < arr.size; i++) {
+        this->data[i] = arr.data[i];
+    }
+    return *this;
 }
 
-int EDArray::GetSize() const {
-	return this->m_nSize;
+auto operator<<(std::ostream& os, const EDArray& arr) -> std::ostream&
+{
+    os << "[";
+    for (int i = 0; i < arr.size; i++) {
+        os << arr.data[i];
+        if (i < arr.size - 1) {
+            os << ", ";
+        }
+    }
+    os << "]";
+    return os;
 }
 
+double& EDArray::operator[](int index)
+{
+    assert(index >= 0 && index < this->size);
 
-void EDArray::SetSize(int nSize) {
-	if (this->m_nSize >= nSize) {
-		// no new allocation needed, just update size and set 0 for new elements
-		for (int i = nSize; i < this->m_nSize; i++) {
-			this->m_pData[i] = 0;
-		}
-		this->m_nSize = nSize;
-	} else {
-		// allocate new double[] and copy values, then release old memory
-		auto *newData = new double[nSize];
-		for (int i = 0; i < this->m_nSize; i++) {
-			newData[i] = this->m_pData[i];
-		}
-		for (int i = this->m_nSize; i < nSize; i++) {
-			newData[i] = 0;
-		}
-		delete[] this->m_pData;
-		this->m_pData = newData;
-		this->m_nSize = nSize;
-		this->m_nMax = nSize;
-	}
+    return this->data[index];
 }
 
+const double& EDArray::operator[](int index) const
+{
+    assert(index >= 0 && index < this->size);
 
-const double &EDArray::GetAt(int nIndex) const {
-	return this->m_pData[nIndex];
+    return this->data[index];
 }
 
-
-void EDArray::SetAt(int nIndex, double dValue) const {
-	this->m_pData[nIndex] = dValue;
+void EDArray::Print() const
+{
+    std::cout << "[";
+    for (int i = 0; i < this->size; i++) {
+        std::cout << this->data[i];
+        if (i < this->size - 1) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]" << std::endl;
 }
 
-
-double &EDArray::operator[](int nIndex) {
-	double &ref = this->m_pData[nIndex];
-	return ref;
+int EDArray::GetSize() const
+{
+    return this->size;
 }
 
+void EDArray::SetSize(int size)
+{
+    assert(size >= 0);
 
-const double &EDArray::operator[](int nIndex) const {
-	return this->m_pData[nIndex];
+    if (this->allocated_size >= size) {
+        for (int i = this->size; i < size; i++) {
+            this->data[i] = 0;
+        }
+        this->size = size;
+    } else {
+        auto* newData = new double[size];
+        for (int i = 0; i < this->size; i++) {
+            newData[i] = this->data[i];
+        }
+        for (int i = this->size; i < size; i++) {
+            newData[i] = 0;
+        }
+        delete[] this->data;
+        this->data = newData;
+        this->size = size;
+        this->allocated_size = size;
+    }
 }
 
+const double& EDArray::GetAt(int index) const
+{
+    assert(index >= 0 && index < this->size);
 
-void EDArray::PushBack(double dValue) {
-
+    return this->data[index];
 }
 
+const void EDArray::SetAt(int index, double value) const
+{
+    assert(index >= 0 && index < this->size);
 
-void EDArray::DeleteAt(int nIndex) {
+    this->data[index] = value;
 }
 
-
-void EDArray::InsertAt(int nIndex, double dValue) {
+void EDArray::PushBack(double value)
+{
+    if (this->allocated_size > this->size) {
+        // no new allocation is required.
+        this->data[this->size] = value;
+        this->size++;
+    } else {
+        // create a new array with this.size + 1:
+        auto* newData = new double[this->size + 1];
+        for (int i = 0; i < this->size; i++) {
+            newData[i] = this->data[i];
+        }
+        newData[this->size] = value;
+        delete[] this->data;
+        this->data = newData;
+        this->size++;
+        this->allocated_size = this->size;
+    }
 }
 
+void EDArray::DeleteAt(int index)
+{
+    // move foward all the elements after index:
+    for (int i = index; i < this->size - 1; i++) {
+        this->data[i] = this->data[i + 1];
+    }
+    this->size--;
+}
 
-EDArray &EDArray::operator =(const EDArray &arr) {
-	return *this;
+void EDArray::InsertAt(int index, double value)
+{
+    if (this->allocated_size > this->size) {
+        // no new allocation is required.
+        for (int i = this->size; i > index; i--) {
+            this->data[i] = this->data[i - 1];
+        }
+        this->data[index] = value;
+        this->size++;
+    } else {
+        // create a new array with this.size + 1:
+        auto* newData = new double[this->size + 1];
+        for (int i = 0; i < index; i++) {
+            newData[i] = this->data[i];
+        }
+        newData[index] = value;
+        for (int i = index; i < this->size; i++) {
+            newData[i + 1] = this->data[i];
+        }
+        delete[] this->data;
+        this->data = newData;
+        this->size++;
+        this->allocated_size = this->size;
+    }
 }

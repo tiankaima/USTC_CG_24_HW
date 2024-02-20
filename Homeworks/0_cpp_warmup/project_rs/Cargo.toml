@@ -1,0 +1,26 @@
+[package]
+name = "cpp_warmup"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "1_basic_d_array"
+path = "1_basic_d_array.rs"
+
+
+[[bin]]
+name = "2_efficient_d_array"
+path = "2_efficient_d_array.rs"
+
+[[bin]]
+name = "3_template_d_array"
+path = "3_template_d_array.rs"
+
+[[bin]]
+name = "4_list_polynomial"
+path = "4_list_polynomial.rs"
+
+[[bin]]
+name = "5_map_polynomial"
+path = "5_map_polynomial.rs"
+

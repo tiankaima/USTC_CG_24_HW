@@ -1,41 +1,49 @@
 #pragma once
 
+#include "cassert"
 #include "iostream"
 
 class EDArray {
 public:
-	EDArray();
+    EDArray();
 
-	explicit EDArray(int nSize, double dValue = 0);
+    explicit EDArray(int size, double value = 0);
 
-	EDArray(const EDArray &arr);
+    EDArray(const EDArray& arr);
 
-	~EDArray();
+    ~EDArray();
 
-	void Print() const;
+    EDArray& operator=(const EDArray& arr);
 
-	[[nodiscard]] int GetSize() const;
+    friend auto operator<<(std::ostream& os, const EDArray& arr)
+        -> std::ostream&;
 
-	void SetSize(int nSize);
+    double& operator[](int index);
 
-	[[nodiscard]] const double &GetAt(int nIndex) const;
+    const double& operator[](int index) const;
 
-	void SetAt(int nIndex, double dValue) const;
+    //! non-standard interfaces
 
-	double &operator[](int nIndex);
+    [[nodiscard]] int GetSize() const;
 
-	const double &operator[](int nIndex) const;
+    void SetSize(int size);
 
-	void PushBack(double dValue);
+    void PushBack(double value);
 
-	void DeleteAt(int nIndex);
+    void DeleteAt(int index);
 
-	void InsertAt(int nIndex, double dValue);
+    void InsertAt(int index, double value);
 
-	EDArray &operator =(const EDArray &arr);
+    //! alternative available for the following methods
+
+    void Print() const;
+
+    [[nodiscard]] const double& GetAt(int index) const;
+
+    const void SetAt(int index, double value) const;
 
 private:
-	double *m_pData;
-	int m_nSize; // number of elements
-	int m_nMax; // size of allocated memory
+    double* data;
+    int size; // used size.
+    int allocated_size;
 };

@@ -1,9 +1,9 @@
-#include "DArray.h"
+#include "TEDArray.hpp"
+#include <iostream>
 
 int main(int argc, char** argv)
 {
-    DArray a;
-    a.InsertAt(0, 2.1);
+    TEDArray a;
     std::cout << a << std::endl;
 
     a.PushBack(3.0);
@@ -16,18 +16,18 @@ int main(int argc, char** argv)
     a.InsertAt(0, 4.1);
     std::cout << a << std::endl;
 
-    DArray acopy = a;
+    TEDArray acopy = a;
     std::cout << acopy << std::endl;
 
-    DArray acopy2(a);
+    TEDArray acopy2(a);
     std::cout << acopy2 << std::endl;
 
-    DArray acopy3, acopy4;
+    TEDArray acopy3, acopy4;
     acopy4 = acopy3 = a;
     std::cout << acopy3 << std::endl;
     std::cout << acopy4 << std::endl;
 
-    DArray b;
+    TEDArray b;
     b.PushBack(21);
     std::cout << b << std::endl;
     b.DeleteAt(0);
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     b.SetSize(5);
     std::cout << b << std::endl;
 
-    DArray c;
+    TEDArray c;
     c.PushBack('a');
     c.PushBack('b');
     c.PushBack('c');
