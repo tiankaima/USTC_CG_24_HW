@@ -1,4 +1,4 @@
-# 中国科学技术大学《计算机图形学》课程作业（2024年春）
+# 中国科学技术大学《计算机图形学》课程作业（2024 年春）
 
 ## 0. 课程简介
 
@@ -38,5 +38,5 @@
 - C++ Primer：[链接] [https://pan.baidu.com/s/1hmWNmL-KglaRGGbVOuPl5A](https://pan.baidu.com/s/1hmWNmL-KglaRGGbVOuPl5A)，[提取码] h959
 - [廖雪峰 Git 教程](https://www.liaoxuefeng.com/wiki/896043488029600)
 - [Git 教程 | 菜鸟教程](https://www.runoob.com/git/git-tutorial.html)
-- OpenGL 教程: [LearnOpenGL](https://learnopengl-cn.github.io/)
+- OpenGL 教程： [LearnOpenGL](https://learnopengl-cn.github.io/)
 - [中文技术文档的写作规范](https://github.com/ruanyf/document-style-guide)

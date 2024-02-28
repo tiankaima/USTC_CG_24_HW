@@ -3,3 +3,5 @@ bin/
 .vscode
 .idea
 cmake-build-debug
+libs/
+imgui.ini
