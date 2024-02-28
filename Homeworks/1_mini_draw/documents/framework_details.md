@@ -13,12 +13,11 @@
     - [3.1 继承](#31-继承)
     - [3.2 多态](#32-多态)
 
-
 我们主要关注 [view/](../../../Framework2D/include/view/) 以及 [1_MiniDraw/](../../../Framework2D/src/assignments/1_MiniDraw/) 中的相关类及其实现
 
 [view/](../../../Framework2D/include/view/) 文件结构如下
 
-```
+```plain
 view/
 ├── window.h        // 窗口类，OpenGL 和 ImGui 上下文初始化的封装
 ├── component.h     // UI 组件的抽象类
@@ -34,6 +33,7 @@ view/
 ## 主要任务
 
 本次作业的**主要任务**就是
+
 - 在 [shapes/](../../../Framework2D/include/view/shapes/) 中补充更多图形的实现；
 - 扩充 [view/comp_canvas.h](../../../Framework2D/include/view/) 及 [view/comp_canvas.cpp](../../../Framework2D/src/view/comp_canvas.cpp) 中的绘图功能；
 - 完善 [1_MiniDraw/window_minidraw.cpp](../../../Framework2D/src/assignments/1_MiniDraw/window_minidraw.cpp) 中的图形界面。
@@ -46,7 +46,7 @@ view/
 
 该部分的实现参考 [demo_hello_world.cpp](../../../Framework2D/src/demo/demo_hello_world.cpp)。
 
-包含绘制窗口初始化的头文件 `window.h`，通过以下方式就可以构建一个名称为 `'Hello World'` 的默认窗口：创建 `USTC_CG::Window` 类型的变量 `w` > 初始化窗口 `w.init()` > 运行窗口 `w.run()`。 
+包含绘制窗口初始化的头文件 `window.h`，通过以下方式就可以构建一个名称为 `'Hello World'` 的默认窗口：创建 `USTC_CG::Window` 类型的变量 `w` > 初始化窗口 `w.init()` > 运行窗口 `w.run()`。
 
 ```cpp
 #include <stdexcept>
@@ -112,7 +112,7 @@ class MiniDraw : public Window
 ```cpp
 void MiniDraw::draw()
 {
-    // flag_show_canvas_view 为bool类型，记录窗口的打开状态
+    // flag_show_canvas_view 为 bool 类型，记录窗口的打开状态
     if (ImGui::Begin("Canvas", &flag_show_canvas_view))
     {
         ImGui::Text("This is a canvas window");
@@ -139,6 +139,7 @@ void MiniDraw::draw()
 <div align=center><img width = 75% src ="figs/t_1.png"/></div align>
 
 通过调用 `ImGui::SetNextWindowPos()` 函数与 `ImGui::SetNextWindowSize()`函数，可以设置窗口的（左上角）位置以及大小。这里获取视窗大小，并且用它来设置窗口的属性，将窗口铺满整个屏幕：
+
 ```cpp
 void MiniDraw::draw()
 {
@@ -153,6 +154,7 @@ void MiniDraw::draw()
     ImGui::End();
 }
 ```
+
 <div align=center><img width = 75% src ="figs/t_2.png"/></div align>
 
 最后，使用 `ImGui::Button()` 可以添加按钮，例如这里添加了名称为 `"Line"` 和 `"Rect"` 的两个按钮，在单击后输出相应的字符串：
@@ -213,6 +215,7 @@ void MiniDraw::draw()
     ImGui::End();
 }
 ```
+
 <div align=center><img width = 75% src ="figs/t_4.png"/></div align>
 
 ### Step 4: 鼠标交互
@@ -228,6 +231,7 @@ ImGui::IsMouseDown(ImGuiMouseButton_Left);
 ```
 
 为了方便鼠标和画布区域的交互，可以在画布区域添加一个 `InvisibleButton`
+
 ```cpp
 // 设置下一个元素的位置
 ImGui::SetCursorScreenPos(canvas_min);
@@ -239,12 +243,14 @@ bool is_hovered = ImGui::IsItemHovered();
 ```
 
 为了实现鼠标绘制线段的交互，我们记录如下的变量，这些变量不是临时的，需要实时维护，因此需要设置为静态变量，或者作为类的属性写在 `MiniDraw` 类中：
+
 ```cpp
 ImVec2 start_point_, end_point_;  // 线段的起点和终点
 bool draw_status_ = false;       // 是否处于绘制状态
 ```
 
 通过获取鼠标交互，修改上述变量
+
 ```cpp
 // 获取鼠标位置
 ImGuiIO& io = ImGui::GetIO();
@@ -457,11 +463,12 @@ C++ 继承与多态概念自行学习，本文只介绍应用
 
 此例中可建立父类 Shape，虚方法 draw
 
-图元 Line，Rect， Ellipse 等等继承于 Shape，实现 draw 方法
+图元 Line，Rect，Ellipse 等等继承于 Shape，实现 draw 方法
 
 使用父类指针指向子类实例，调用 draw 函数，实现多态
 
 ### 3.1 继承
+
 ```cpp
 class Shape
 {
