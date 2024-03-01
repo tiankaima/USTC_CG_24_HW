@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "shapes/freehand.h"
 #include "shapes/shape.h"
 #include "view/component.h"
 #include "view/shapes/ellipse.h"
@@ -72,6 +73,7 @@ class Canvas : public Component
                 return std::make_shared<Rect>(point, point);
             case ShapeType::kEllipse:
                 return std::make_shared<Ellipse>(point, point);
+            case ShapeType::kFreehand: return std::make_shared<Freehand>(point);
             default: return nullptr;
         }
     }
@@ -127,7 +129,21 @@ class Canvas : public Component
 
     // List of shapes drawn on the canvas.
     std::vector<std::shared_ptr<Shape>> shape_list_;
-    std::vector<std::shared_ptr<Shape>> undo_list_;
-};
 
+    enum class Action
+    {
+        kDraw = 0,
+        kDelete = 1,
+    };
+
+    struct History
+    {
+        Action action;
+        std::shared_ptr<Shape> shape;
+        size_t delete_index = -1;
+    };
+
+    std::vector<History> history_actions;
+    size_t history_index = -1;
+};
 }  // namespace USTC_CG

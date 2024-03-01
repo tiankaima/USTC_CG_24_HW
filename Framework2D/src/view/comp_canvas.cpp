@@ -45,36 +45,56 @@ void Canvas::set_type(ShapeType type)
 
 void Canvas::undo()
 {
-    if (!shape_list_.empty())
+    if (history_index == -1)
     {
-        undo_list_.push_back(shape_list_.back());
+        return;
+    }
+    if (history_actions[history_index].action == Action::kDraw)
+    {
         shape_list_.pop_back();
     }
-    else
+    else if (history_actions[history_index].action == Action::kDelete)
     {
-        std::cout << "No shape to undo" << std::endl;
+        shape_list_.push_back(history_actions[history_index].shape);
     }
+    history_index--;
 }
 
 void Canvas::redo()
 {
-    if (!undo_list_.empty())
+    if (history_index == history_actions.size() - 1)
     {
-        shape_list_.push_back(undo_list_.back());
-        undo_list_.pop_back();
+        return;
     }
-    else
+    history_index++;
+    if (history_actions[history_index].action == Action::kDraw)
     {
-        std::cout << "No shape to redo" << std::endl;
+        shape_list_.push_back(history_actions[history_index].shape);
+    }
+    else if (history_actions[history_index].action == Action::kDelete)
+    {
+        // shape_list_.pop_back();
+        shape_list_.erase(
+            shape_list_.begin() +
+            static_cast<int>(history_actions[history_index].delete_index));
     }
 }
 
 void Canvas::clear()
 {
-    for (const auto& shape : shape_list_)
+    // for (auto& shape : shape_list_)
+    // {
+    //     history_actions.push_back({ Action::kDelete, shape });
+    //     history_index++;
+    // }
+
+    for (auto index = shape_list_.size(); index > 0; index--)
     {
-        undo_list_.push_back(shape);
+        history_actions.push_back(
+            { Action::kDelete, shape_list_[index - 1], index - 1 });
+        history_index++;
     }
+
     shape_list_.clear();
 }
 
@@ -132,7 +152,13 @@ void Canvas::draw_shapes() const
 
 void Canvas::mouse_click_event()
 {
-    this->undo_list_.clear();
+    if (history_index != -1)
+    {
+        // remove all the actions after the current index
+        history_actions.erase(
+            history_actions.begin() + static_cast<int>(history_index) + 1,
+            history_actions.end());
+    }
 
     if (!draw_status_)
     {
@@ -146,6 +172,8 @@ void Canvas::mouse_click_event()
         if (current_shape_)
         {
             shape_list_.push_back(current_shape_);
+            history_actions.push_back({ Action::kDraw, current_shape_ });
+            history_index++;
             current_shape_.reset();
         }
     }
