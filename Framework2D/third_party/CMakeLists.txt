@@ -9,11 +9,11 @@ set_target_properties(glfw update_mappings PROPERTIES FOLDER "third_party/GLFW3"
 # glad
 set(glad_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/glad" CACHE STRING "")
 file(GLOB source
-  "${glad_SOURCE_DIR}/src/*.c"
+    "${glad_SOURCE_DIR}/src/*.c"
 )
 add_library(glad ${source})
 target_include_directories(glad
-  PUBLIC "${glad_SOURCE_DIR}/include"
+    PUBLIC "${glad_SOURCE_DIR}/include"
 )
 set_target_properties(glad PROPERTIES FOLDER "third_party")
 

@@ -9,10 +9,6 @@ MiniDraw::MiniDraw(const std::string& window_name) : Window(window_name)
     p_canvas_ = std::make_shared<Canvas>("Cmpt.Canvas");
 }
 
-MiniDraw::~MiniDraw()
-{
-}
-
 void MiniDraw::draw()
 {
     draw_canvas();
@@ -27,28 +23,39 @@ void MiniDraw::draw_canvas()
     if (ImGui::Begin(
             "Canvas",
             &flag_show_canvas_view_,
-            ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_NoBackground))
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
     {
-        // Buttons for shape types
-        if (ImGui::Button("Line"))
+        for (const auto type : Canvas::all_types())
         {
-            std::cout << "Set shape to Line" << std::endl;
-            p_canvas_->set_line();
+            if (ImGui::Button(Canvas::name(type).c_str()))
+            {
+                p_canvas_->set_type(type);
+            }
+            ImGui::SameLine();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Rect"))
+        if (ImGui::Button("Clear"))
         {
-            std::cout << "Set shape to Rect" << std::endl;
-            p_canvas_->set_rect();
+            std::cout << "Clear canvas" << std::endl;
+            p_canvas_->clear();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Undo"))
+        {
+            std::cout << "Undo" << std::endl;
+            p_canvas_->undo();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Redo"))
+        {
+            std::cout << "Redo" << std::endl;
+            p_canvas_->redo();
         }
 
-        // HW1_TODO: More primitives
-        //    - Ellipse
-        //    - Polygon
-        //    - Freehand(optional)
-        
-        // Canvas component
         ImGui::Text("Press left mouse to add shapes.");
+
+        ImGui::Text("Current shape: %s", p_canvas_->shape_type_name().c_str());
+
         // Set the canvas to fill the rest of the window
         const auto& canvas_min = ImGui::GetCursorScreenPos();
         const auto& canvas_size = ImGui::GetContentRegionAvail();

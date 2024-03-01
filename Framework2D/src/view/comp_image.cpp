@@ -6,12 +6,12 @@
 namespace USTC_CG
 {
 Image::Image(const std::string& label, const std::string& filename)
-    : filename_(filename),
-      Component(label)
+    : Component(label),
+      filename_(filename)
 {
     glGenTextures(1, &tex_id_);
     image_data_ =
-        stbi_load(filename.c_str(), &image_width_, &image_height_, NULL, 4);
+        stbi_load(filename.c_str(), &image_width_, &image_height_, nullptr, 4);
     if (image_data_ == nullptr)
         std::cout << "Failed to load image from file " << filename << std::endl;
     else
@@ -37,10 +37,24 @@ void Image::set_position(const ImVec2& pos)
 
 ImVec2 Image::get_image_size() const
 {
-    return ImVec2((float)image_width_, (float)image_height_);
+    return { static_cast<float>(image_width_),
+             static_cast<float>(image_height_) };
 }
 
-void Image::load_gltexture()
+void Image::draw_image() const
+{
+    auto draw_list = ImGui::GetWindowDrawList();
+    if (image_data_)
+    {
+        ImVec2 p_min = position_;
+        ImVec2 p_max = ImVec2(
+            p_min.x + static_cast<float>(image_width_),
+            p_min.y + static_cast<float>(image_height_));
+        draw_list->AddImage((void*)(intptr_t)tex_id_, p_min, p_max);
+    }
+}
+
+void Image::load_gltexture() const
 {
     glBindTexture(GL_TEXTURE_2D, tex_id_);
 
@@ -59,16 +73,5 @@ void Image::load_gltexture()
         GL_RGBA,
         GL_UNSIGNED_BYTE,
         image_data_);
-}
-
-void Image::draw_image()
-{
-    auto draw_list = ImGui::GetWindowDrawList();
-    if (image_data_)
-    {
-        ImVec2 p_min = position_;
-        ImVec2 p_max = ImVec2(p_min.x + image_width_, p_min.y + image_height_);
-        draw_list->AddImage((void*)(intptr_t)tex_id_, p_min, p_max);
-    }
 }
 }  // namespace USTC_CG

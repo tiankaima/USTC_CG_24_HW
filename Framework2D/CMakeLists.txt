@@ -1,20 +1,20 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(
-  "USTC_CG_2024_Image"
-  VERSION 1.0
-  LANGUAGES C CXX
+    "USTC_CG_2024_Image"
+    VERSION 1.0
+    LANGUAGES C CXX
 )
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 #set(BUILD_SHARED_LIBS ON)
 
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
-endif()
+endif ()
 
 set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third_party")

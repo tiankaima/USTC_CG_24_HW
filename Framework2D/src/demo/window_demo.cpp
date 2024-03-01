@@ -79,7 +79,7 @@ void Demo::draw_open_image_file_dialog()
                 ImGuiFileDialog::Instance()->GetFilePathName();
             std::string label = filePathName;
             p_image_ = std::make_shared<Image>(label, filePathName);
-            p_canvas_->clear_shape_list();
+            p_canvas_->clear();
         }
         ImGuiFileDialog::Instance()->Close();
         flag_open_file_dialog_ = false;

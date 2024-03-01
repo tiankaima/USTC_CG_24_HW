@@ -3,10 +3,14 @@
 #include <imgui.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "shapes/shape.h"
 #include "view/component.h"
+#include "view/shapes/ellipse.h"
+#include "view/shapes/line.h"
+#include "view/shapes/rect.h"
 
 namespace USTC_CG
 {
@@ -22,22 +26,66 @@ class Canvas : public Component
     void draw() override;
 
     // Enumeration for supported shape types.
-    enum ShapeType
+    enum class ShapeType
     {
         kDefault = 0,
         kLine = 1,
         kRect = 2,
         kEllipse = 3,
         kPolygon = 4,
+        kFreehand = 5
     };
 
-    // Shape type setters.
-    void set_default();
-    void set_line();
-    void set_rect();
+    [[nodiscard]] static constexpr std::vector<ShapeType> all_types()
+    {
+        return {
+            ShapeType::kDefault, ShapeType::kLine,    ShapeType::kRect,
+            ShapeType::kEllipse, ShapeType::kPolygon, ShapeType::kFreehand
+        };
+    }
 
-    // Clears all shapes from the canvas.
-    void clear_shape_list();
+    [[nodiscard]] static constexpr std::string name(const ShapeType& type)
+    {
+        switch (type)
+        {
+            case ShapeType::kDefault: return "Default";
+            case ShapeType::kLine: return "Line";
+            case ShapeType::kRect: return "Rect";
+            case ShapeType::kEllipse: return "Ellipse";
+            case ShapeType::kPolygon: return "Polygon";
+            case ShapeType::kFreehand: return "Freehand";
+            default: return "Unknown";
+        }
+    }
+
+    [[nodiscard]] static constexpr std::shared_ptr<Shape> create_shape(
+        const ShapeType& type,
+        ImVec2 point)
+    {
+        switch (type)
+        {
+            case ShapeType::kDefault:  //
+                return nullptr;
+            case ShapeType::kLine:  //
+                return std::make_shared<Line>(point, point);
+            case ShapeType::kRect:  //
+                return std::make_shared<Rect>(point, point);
+            case ShapeType::kEllipse:
+                return std::make_shared<Ellipse>(point, point);
+            default: return nullptr;
+        }
+    }
+
+    [[nodiscard]] std::string shape_type_name() const
+    {
+        return name(shape_type_);
+    }
+
+    void set_type(ShapeType type);
+
+    void undo();
+    void redo();
+    void clear();
 
     // Set canvas attributes (position and size).
     void set_attributes(const ImVec2& min, const ImVec2& size);
@@ -48,7 +96,7 @@ class Canvas : public Component
    private:
     // Drawing functions.
     void draw_background();
-    void draw_shapes();
+    void draw_shapes() const;
 
     // Event handlers for mouse interactions.
     void mouse_click_event();
@@ -56,7 +104,7 @@ class Canvas : public Component
     void mouse_release_event();
 
     // Calculates mouse's relative position in the canvas.
-    ImVec2 mouse_pos_in_canvas() const;
+    [[nodiscard]] ImVec2 mouse_pos_in_canvas() const;
 
     // Canvas attributes.
     ImVec2 canvas_min_;         // Top-left corner of the canvas.
@@ -73,12 +121,13 @@ class Canvas : public Component
     bool is_hovered_, is_active_;
 
     // Current shape being drawn.
-    ShapeType shape_type_;
+    ShapeType shape_type_ = ShapeType::kDefault;
     ImVec2 start_point_, end_point_;
     std::shared_ptr<Shape> current_shape_;
 
     // List of shapes drawn on the canvas.
     std::vector<std::shared_ptr<Shape>> shape_list_;
+    std::vector<std::shared_ptr<Shape>> undo_list_;
 };
 
 }  // namespace USTC_CG

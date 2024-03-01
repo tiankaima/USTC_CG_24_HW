@@ -1,4 +1,7 @@
 #pragma once
+#include "imgui.h"
+
+using IM_COL32_D = decltype(IM_COL32(0, 0, 0, 0));
 
 namespace USTC_CG
 {
@@ -8,11 +11,12 @@ class Shape
     // Draw Settings
     struct Config
     {
-        // Offset to convert canvas position to screen position
-        float bias[2] = { 0.f, 0.f };
+        // Bias to adjust the shape's position on the screen
+        ImVec2 bias = ImVec2(0.0f, 0.0f);
         // Line color in RGBA format
-        unsigned char line_color[4] = { 255, 0, 0, 255 };
+        IM_COL32_D line_color = IM_COL32(255, 0, 0, 255);
         float line_thickness = 2.0f;
+        bool is_current_drawing = false;
     };
 
    public:
@@ -20,24 +24,54 @@ class Shape
 
     /**
      * Draws the shape on the screen.
-     * This is a pure virtual function that must be implemented by all derived
-     * classes.
+     * This is a pure virtual function that must be implemented by all
+     * derived classes.
      *
      * @param config The configuration settings for drawing, including line
      * color, thickness, and bias.
      *               - line_color defines the color of the shape's outline.
-     *               - line_thickness determines how thick the outline will be.
+     *               - line_thickness determines how thick the outline will
+     * be.
      *               - bias is used to adjust the shape's position on the
      * screen.
      */
     virtual void draw(const Config& config) const = 0;
     /**
      * Updates the state of the shape.
-     * This function allows for dynamic modification of the shape, in response
-     * to user interactions like dragging.
+     * This function allows for dynamic modification of the shape, in
+     * response to user interactions like dragging.
      *
-     * @param x, y Dragging point. e.g. end point of a line.
+     * @param point Dragging point. e.g. end point of a line.
      */
-    virtual void update(float x, float y) = 0;
+    virtual void update(ImVec2 point) = 0;
 };
 }  // namespace USTC_CG
+
+inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs)
+{
+    return { lhs.x + rhs.x, lhs.y + rhs.y };
+}
+
+inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs)
+{
+    return { lhs.x - rhs.x, lhs.y - rhs.y };
+}
+
+inline ImVec2 operator/(const ImVec2& lhs, float rhs)
+{
+    return { lhs.x / rhs, lhs.y / rhs };
+}
+
+/**
+ * Adjusts the alpha value of a color.
+ * @param color The color to adjust.
+ * @param alpha The alpha value to multiply the color's alpha by.
+ */
+inline IM_COL32_D opacity(IM_COL32_D color, float alpha)
+{
+    return IM_COL32(
+        (color >> IM_COL32_A_SHIFT) * alpha,
+        (color >> IM_COL32_B_SHIFT) & 0xFF,
+        (color >> IM_COL32_G_SHIFT) & 0xFF,
+        (color >> IM_COL32_R_SHIFT) & 0xFF);
+}

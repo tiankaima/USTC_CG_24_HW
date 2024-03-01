@@ -1,7 +1,9 @@
 #pragma once
 
+// clang-format off
 #include <glad/glad.h>  // Include GLAD before GLFW.
 #include <GLFW/glfw3.h>
+// clang-format on
 
 #include <memory>
 #include <string>
@@ -19,7 +21,7 @@ class Image : public Component
    public:
     // Constructs an Image component with a given label and image file.
     explicit Image(const std::string& label, const std::string& filename);
-    ~Image();  // Destructor to manage resources.
+    ~Image() override;  // Destructor to manage resources.
 
     // Renders the image component.
     void draw() override;
@@ -28,14 +30,14 @@ class Image : public Component
     void set_position(const ImVec2& pos);
 
     // Retrieves the size (width, height) of the loaded image.
-    ImVec2 get_image_size() const;
+    [[nodiscard]] ImVec2 get_image_size() const;
 
    private:
     // Draws the loaded image.
-    void draw_image();
+    void draw_image() const;
 
     // Loads the image file into OpenGL texture memory.
-    void load_gltexture();
+    void load_gltexture() const;
 
    protected:
     std::string filename_;                 // Path to the image file.

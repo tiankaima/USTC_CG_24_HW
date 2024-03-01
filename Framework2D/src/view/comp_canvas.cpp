@@ -4,8 +4,6 @@
 #include <iostream>
 
 #include "imgui.h"
-#include "view/shapes/line.h"
-#include "view/shapes/rect.h"
 
 namespace USTC_CG
 {
@@ -14,12 +12,70 @@ void Canvas::draw()
     draw_background();
 
     if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
         mouse_click_event();
+    }
     mouse_move_event();
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+    {
         mouse_release_event();
+    }
+
+    // ctrl z:
+    if (ImGui::GetIO().KeyCtrl &&
+        ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Z)))
+    {
+        undo();
+    }
+    // ctrl y:
+    if (ImGui::GetIO().KeyCtrl &&
+        ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Y)))
+    {
+        redo();
+    }
 
     draw_shapes();
+}
+
+void Canvas::set_type(ShapeType type)
+{
+    draw_status_ = false;
+    shape_type_ = type;
+}
+
+void Canvas::undo()
+{
+    if (!shape_list_.empty())
+    {
+        undo_list_.push_back(shape_list_.back());
+        shape_list_.pop_back();
+    }
+    else
+    {
+        std::cout << "No shape to undo" << std::endl;
+    }
+}
+
+void Canvas::redo()
+{
+    if (!undo_list_.empty())
+    {
+        shape_list_.push_back(undo_list_.back());
+        undo_list_.pop_back();
+    }
+    else
+    {
+        std::cout << "No shape to redo" << std::endl;
+    }
+}
+
+void Canvas::clear()
+{
+    for (const auto& shape : shape_list_)
+    {
+        undo_list_.push_back(shape);
+    }
+    shape_list_.clear();
 }
 
 void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
@@ -34,29 +90,6 @@ void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
 void Canvas::show_background(bool flag)
 {
     show_background_ = flag;
-}
-
-void Canvas::set_default()
-{
-    draw_status_ = false;
-    shape_type_ = kDefault;
-}
-
-void Canvas::set_line()
-{
-    draw_status_ = false;
-    shape_type_ = kLine;
-}
-
-void Canvas::set_rect()
-{
-    draw_status_ = false;
-    shape_type_ = kRect;
-}
-
-void Canvas::clear_shape_list()
-{
-    shape_list_.clear();
 }
 
 void Canvas::draw_background()
@@ -78,7 +111,7 @@ void Canvas::draw_background()
     is_active_ = ImGui::IsItemActive();
 }
 
-void Canvas::draw_shapes()
+void Canvas::draw_shapes() const
 {
     Shape::Config s = { .bias = { canvas_min_.x, canvas_min_.y } };
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -91,6 +124,7 @@ void Canvas::draw_shapes()
     }
     if (draw_status_ && current_shape_)
     {
+        s.is_current_drawing = true;
         current_shape_->draw(s);
     }
     draw_list->PopClipRect();
@@ -98,32 +132,13 @@ void Canvas::draw_shapes()
 
 void Canvas::mouse_click_event()
 {
-    // HW1_TODO: Drawing rule for more primitives
+    this->undo_list_.clear();
+
     if (!draw_status_)
     {
         draw_status_ = true;
         start_point_ = end_point_ = mouse_pos_in_canvas();
-        switch (shape_type_)
-        {
-            case USTC_CG::Canvas::kDefault:
-            {
-                break;
-            }
-            case USTC_CG::Canvas::kLine:
-            {
-                current_shape_ = std::make_shared<Line>(
-                    start_point_.x, start_point_.y, end_point_.x, end_point_.y);
-                break;
-            }
-            case USTC_CG::Canvas::kRect:
-            {
-                current_shape_ = std::make_shared<Rect>(
-                    start_point_.x, start_point_.y, end_point_.x, end_point_.y);
-                break;
-            }
-             
-            default: break;
-        }
+        current_shape_ = Canvas::create_shape(shape_type_, start_point_);
     }
     else
     {
@@ -144,7 +159,7 @@ void Canvas::mouse_move_event()
         end_point_ = mouse_pos_in_canvas();
         if (current_shape_)
         {
-            current_shape_->update(end_point_.x, end_point_.y);
+            current_shape_->update(end_point_);
         }
     }
 }

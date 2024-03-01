@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 
 namespace USTC_CG
 {
@@ -8,7 +9,7 @@ namespace USTC_CG
 class Component
 {
    public:
-    explicit Component(const std::string& label) : label_(label)
+    explicit Component(std::string label) : label_(std::move(label))
     {
     }
     virtual ~Component() = default;

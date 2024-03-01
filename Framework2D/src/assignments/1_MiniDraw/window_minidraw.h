@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "view/window.h"
 #include "view/comp_canvas.h"
+#include "view/window.h"
 
 namespace USTC_CG
 {
@@ -11,9 +11,9 @@ class MiniDraw : public Window
 {
    public:
     explicit MiniDraw(const std::string& window_name);
-    ~MiniDraw();
+    ~MiniDraw() override = default;
 
-    void draw();
+    void draw() override;
 
    private:
     void draw_canvas();
