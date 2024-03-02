@@ -1,0 +1,192 @@
+@startuml
+abstract "Component" as C_0000406813343211604253
+abstract C_0000406813343211604253 {
++Component(std::string label) : void
++~Component() constexpr = default : void
+..
+{abstract} +draw() = 0 : void
+__
+#label_ : std::string
+}
+abstract "Shape" as C_0001743666612445748179
+abstract C_0001743666612445748179 {
++~Shape() constexpr = default : void
+..
+{abstract} +draw(const Config & config) const = 0 : void
+{abstract} +update(ImVec2 point) = 0 : void
+__
+}
+class "Shape::Config" as C_0001263837579429814513
+class C_0001263837579429814513 {
+__
++bias : ImVec2
++is_current_drawing : bool
++line_color : IM_COL32_D
++line_thickness : float
+}
+class "Ellipse" as C_0001751885511170445259
+class C_0001751885511170445259 {
++Ellipse() = default : void
++Ellipse(ImVec2 start_point, ImVec2 end_point) : void
++~Ellipse() constexpr = default : void
+..
++draw(const Config & config) const : void
++update(ImVec2 point) : void
+__
+-end_point_ : ImVec2
+-start_point_ : ImVec2
+}
+class "Freehand" as C_0000322441914724105175
+class C_0000322441914724105175 {
++Freehand() = default : void
++Freehand(ImVec2 start_point) : void
++~Freehand() constexpr = default : void
+..
++draw(const Config & config) const : void
++update(ImVec2 point) : void
+__
+-points_ : std::vector<ImVec2>
+}
+class "Line" as C_0001853304854234359389
+class C_0001853304854234359389 {
++Line() = default : void
++Line(ImVec2 start_point, ImVec2 end_point) : void
++~Line() constexpr = default : void
+..
++draw(const Config & config) const : void
++update(ImVec2 point) : void
+__
+-end_point_ : ImVec2
+-start_point_ : ImVec2
+}
+class "Polygon" as C_0001981080654496099971
+class C_0001981080654496099971 {
++Polygon() = default : void
++Polygon(ImVec2 start_point) : void
++~Polygon() constexpr = default : void
+..
++addPoint(ImVec2 point) : void
++draw(const Config & config) const : void
++update(ImVec2 point) : void
+__
+-points_ : std::vector<ImVec2>
+}
+class "Rect" as C_0000944662718709904555
+class C_0000944662718709904555 {
++Rect() = default : void
++Rect(ImVec2 start_point, ImVec2 end_point) : void
++~Rect() constexpr = default : void
+..
++draw(const Config & config) const : void
++update(ImVec2 point) : void
+__
+-end_point_ : ImVec2
+-start_point_ : ImVec2
+}
+class "Canvas" as C_0000190544974973925391
+class C_0000190544974973925391 {
+{static} +all_types() constexpr : std::vector<ShapeType>
++clear() : void
+{static} +create_shape(const ShapeType & type, ImVec2 point) : std::shared_ptr<Shape>
++draw() : void
+-draw_background() : void
+-draw_shapes() const : void
+-finish_drawing() : void
+-mouse_click_event() : void
+-mouse_move_event() : void
+-mouse_pos_in_canvas() const : ImVec2
+-mouse_release_event() : void
+{static} +name(const ShapeType & type) constexpr : std::string
++redo() : void
++set_attributes(const ImVec2 & min, const ImVec2 & size) : void
++set_type(ShapeType type) : void
++shape_type_name() const : std::string
++show_background(bool flag) : void
++undo() : void
+__
+-background_color_ : ImU32
+-border_color_ : ImU32
+-canvas_max_ : ImVec2
+-canvas_min_ : ImVec2
+-canvas_minimal_size_ : ImVec2
+-canvas_size_ : ImVec2
+-current_shape_ : std::shared_ptr<Shape>
+-draw_status_ : bool
+-end_point_ : ImVec2
+-history_actions : std::vector<History>
+-history_index : size_t
+-is_active_ : bool
+-is_hovered_ : bool
+-shape_list_ : std::vector<std::shared_ptr<Shape>>
+-shape_type_ : ShapeType
+-show_background_ : bool
+-start_point_ : ImVec2
+}
+enum "Canvas::ShapeType" as C_0000207772773698339759
+enum C_0000207772773698339759 {
+kDefault
+kLine
+kRect
+kEllipse
+kPolygon
+kFreehand
+}
+enum "Canvas::Action" as C_0000687141411417925229
+enum C_0000687141411417925229 {
+kDraw
+kDelete
+}
+class "Canvas::History" as C_0000153274574836037070
+class C_0000153274574836037070 {
+__
++action : Action
++delete_index : size_t
++shape : std::shared_ptr<Shape>
+}
+class "Window" as C_0000701994109645822129
+class C_0000701994109645822129 {
++Window(const std::string & window_name) : void
++~Window() : void
+..
+#draw() : void
++init() : bool
+#init_glfw() : bool
+#init_gui() : bool
+#render() : void
++run() : void
+__
+#height_ : int
+#name_ : std::string
+#width_ : int
+#window_ : GLFWwindow *
+}
+class "MiniDraw" as C_0002197955776814560432
+class C_0002197955776814560432 {
++MiniDraw(const std::string & window_name) : void
++~MiniDraw() = default : void
+..
++draw() : void
+-draw_canvas() : void
+__
+-flag_show_canvas_view_ : bool
+-p_canvas_ : std::shared_ptr<Canvas>
+}
+C_0001263837579429814513 --+ C_0001743666612445748179
+C_0001743666612445748179 <|-- C_0001751885511170445259
+C_0001743666612445748179 <|-- C_0000322441914724105175
+C_0001743666612445748179 <|-- C_0001853304854234359389
+C_0001743666612445748179 <|-- C_0001981080654496099971
+C_0001743666612445748179 <|-- C_0000944662718709904555
+C_0000190544974973925391 --> C_0001743666612445748179 : -current_shape_
+C_0000190544974973925391 o-- C_0001743666612445748179 : -shape_list_
+C_0000406813343211604253 <|-- C_0000190544974973925391
+C_0000207772773698339759 --+ C_0000190544974973925391
+C_0000687141411417925229 --+ C_0000190544974973925391
+C_0000153274574836037070 --+ C_0000190544974973925391
+C_0000153274574836037070 --> C_0001743666612445748179 : +shape
+C_0002197955776814560432 --> C_0000190544974973925391 : -p_canvas_
+C_0000701994109645822129 <|-- C_0002197955776814560432
+
+'Generated with clang-uml, version 0.5.0-13-g52b72f3
+'LLVM version clang version 16.0.6
+@enduml

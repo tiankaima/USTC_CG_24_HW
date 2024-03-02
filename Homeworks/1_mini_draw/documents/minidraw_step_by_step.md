@@ -5,7 +5,7 @@
 - 在 [Canvas 类](../../../Framework2D/include/view/comp_canvas.h) 中添加绘制新图形 `Ellipse`, `Polygon`, `Freehand` 的功能；
 - 在 [MiniDraw 窗口类](../../../Framework2D/src/assignments/1_MiniDraw/window_minidraw.cpp) 中添加相应的交互按钮；
 - 学习类的**继承**和**多态**。
-  
+
 ## 说明
 
 - 请确保已经按照 [ImGui 程序框架配置说明](framework_introduction.md) 配置成功框架代码，这个时候应该可以运行成功 `1_MiniDraw` 项目，已经实现了 `Line` 和 `Rectangle` 的绘制；
@@ -46,6 +46,7 @@ void AddEllipse(const ImVec2& center, float radius_x, float radius_y, ImU32 col,
 - 在函数 `mouse_click_event()` 中用构造方法创建一个椭圆，让 `current_shape_` 指向它；
 
 剩下的操作都是已经完成了的，不需要额外补充：
+
 - 函数 `mouse_move_event()` 中调用 `update` 函数动态更新 `current_shape_`；
 - 函数 `mouse_click_event()` 在绘画状态中单击时退出绘画状态，并存储当前图形。
 
@@ -72,7 +73,3 @@ void AddEllipse(const ImVec2& center, float radius_x, float radius_y, ImU32 col,
 相应地要修改 `mouse_click_event()`, `mouse_move_event()`, `mouse_release_event()` 中的中多边形相关的逻辑。
 
 > **Freehand 图形的绘制事实上和多边形较为类似，实现思路是一致的。**
-
-
-
-

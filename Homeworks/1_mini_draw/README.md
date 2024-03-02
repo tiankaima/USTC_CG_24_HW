@@ -1,6 +1,7 @@
 # 1. 画图小工具 MiniDraw
 
 > 作业步骤：
+>
 > - 查看[文档](documents/)，内含多个小教程，请先阅读 [documents/README.md](documents/README.md)，其中包含了所有文档的阅读引导
 > - 在[项目目录](../../Framework2D/)中编写作业代码
 > - 按照[作业规范](../README.md)提交作业

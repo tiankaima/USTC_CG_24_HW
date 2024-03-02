@@ -439,7 +439,7 @@ public:
         draw_list->AddRect(
             ImVec2(start_point_x_, start_point_y_),
             ImVec2(end_point_x_, end_point_y_),
-            IM_COL32(255, 0, 0, 255), 
+            IM_COL32(255, 0, 0, 255),
             0.f,
             ImDrawFlags_None,
             2.0f);
@@ -527,7 +527,7 @@ if (ImGui::Button("Rect"))
 if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
 {
     std::shared_ptr<Shape> p_shape;
-    
+
     // 把当前形状添加到形状列表当中
     switch (shape_type_)
     {

@@ -60,7 +60,7 @@ class Canvas : public Component
         }
     }
 
-    [[nodiscard]] static constexpr std::shared_ptr<Shape> create_shape(
+    [[nodiscard]] static std::shared_ptr<Shape> create_shape(
         const ShapeType& type,
         ImVec2 point)
     {
