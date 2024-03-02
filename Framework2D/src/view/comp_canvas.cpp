@@ -82,12 +82,12 @@ void Canvas::redo()
 
 void Canvas::clear()
 {
-    // for (auto& shape : shape_list_)
-    // {
-    //     history_actions.push_back({ Action::kDelete, shape });
-    //     history_index++;
-    // }
-
+    if (history_index != -1 && history_index != history_actions.size() - 1)
+    {
+        history_actions.erase(
+            history_actions.begin() + static_cast<int>(history_index) + 1,
+            history_actions.end());
+    }
     for (auto index = shape_list_.size(); index > 0; index--)
     {
         history_actions.push_back(
@@ -152,14 +152,6 @@ void Canvas::draw_shapes() const
 
 void Canvas::mouse_click_event()
 {
-    if (history_index != -1)
-    {
-        // remove all the actions after the current index
-        history_actions.erase(
-            history_actions.begin() + static_cast<int>(history_index) + 1,
-            history_actions.end());
-    }
-
     if (!draw_status_)
     {
         draw_status_ = true;
@@ -172,6 +164,14 @@ void Canvas::mouse_click_event()
         if (current_shape_)
         {
             shape_list_.push_back(current_shape_);
+            if (history_index != -1 &&
+                history_index != history_actions.size() - 1)
+            {
+                history_actions.erase(
+                    history_actions.begin() + static_cast<int>(history_index) +
+                        1,
+                    history_actions.end());
+            }
             history_actions.push_back({ Action::kDraw, current_shape_ });
             history_index++;
             current_shape_.reset();
