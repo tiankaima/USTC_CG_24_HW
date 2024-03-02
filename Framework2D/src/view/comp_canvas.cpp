@@ -34,6 +34,15 @@ void Canvas::draw()
         redo();
     }
 
+    // enter:
+    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter)))
+    {
+        if (draw_status_)
+        {
+            this->finish_drawing();
+        }
+    }
+
     draw_shapes();
 }
 
@@ -150,6 +159,24 @@ void Canvas::draw_shapes() const
     draw_list->PopClipRect();
 }
 
+void Canvas::finish_drawing()
+{
+    draw_status_ = false;
+    if (current_shape_)
+    {
+        shape_list_.push_back(current_shape_);
+        if (history_index != -1 && history_index != history_actions.size() - 1)
+        {
+            history_actions.erase(
+                history_actions.begin() + static_cast<int>(history_index) + 1,
+                history_actions.end());
+        }
+        history_actions.push_back({ Action::kDraw, current_shape_ });
+        history_index++;
+        current_shape_.reset();
+    }
+}
+
 void Canvas::mouse_click_event()
 {
     if (!draw_status_)
@@ -160,28 +187,19 @@ void Canvas::mouse_click_event()
     }
     else
     {
-        draw_status_ = false;
-        if (current_shape_)
+        if (shape_type_ == ShapeType::kPolygon)
         {
-            shape_list_.push_back(current_shape_);
-            if (history_index != -1 &&
-                history_index != history_actions.size() - 1)
-            {
-                history_actions.erase(
-                    history_actions.begin() + static_cast<int>(history_index) +
-                        1,
-                    history_actions.end());
-            }
-            history_actions.push_back({ Action::kDraw, current_shape_ });
-            history_index++;
-            current_shape_.reset();
+            std::dynamic_pointer_cast<Polygon>(current_shape_)
+                ->addPoint(mouse_pos_in_canvas());
+            return;
         }
+
+        this->finish_drawing();
     }
 }
 
 void Canvas::mouse_move_event()
 {
-    // HW1_TODO: Drawing rule for more primitives
     if (draw_status_)
     {
         end_point_ = mouse_pos_in_canvas();
@@ -194,7 +212,6 @@ void Canvas::mouse_move_event()
 
 void Canvas::mouse_release_event()
 {
-    // HW1_TODO: Drawing rule for more primitives
 }
 
 ImVec2 Canvas::mouse_pos_in_canvas() const

@@ -6,12 +6,13 @@
 #include <string>
 #include <vector>
 
-#include "shapes/freehand.h"
-#include "shapes/shape.h"
 #include "view/component.h"
 #include "view/shapes/ellipse.h"
+#include "view/shapes/freehand.h"
 #include "view/shapes/line.h"
+#include "view/shapes/polygon.h"
 #include "view/shapes/rect.h"
+#include "view/shapes/shape.h"
 
 namespace USTC_CG
 {
@@ -73,8 +74,12 @@ class Canvas : public Component
                 return std::make_shared<Rect>(point, point);
             case ShapeType::kEllipse:
                 return std::make_shared<Ellipse>(point, point);
-            case ShapeType::kFreehand: return std::make_shared<Freehand>(point);
-            default: return nullptr;
+            case ShapeType::kPolygon:  //
+                return std::make_shared<Polygon>(point);
+            case ShapeType::kFreehand:  //
+                return std::make_shared<Freehand>(point);
+            default:  //
+                return nullptr;
         }
     }
 
@@ -99,6 +104,8 @@ class Canvas : public Component
     // Drawing functions.
     void draw_background();
     void draw_shapes() const;
+
+    void finish_drawing();
 
     // Event handlers for mouse interactions.
     void mouse_click_event();
