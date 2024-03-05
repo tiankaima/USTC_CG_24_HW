@@ -5,3 +5,4 @@ bin/
 cmake-build-debug
 libs/
 imgui.ini
+.cache

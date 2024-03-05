@@ -7,7 +7,7 @@ namespace USTC_CG
 Demo::Demo(const std::string& window_name) : Window(window_name)
 {
     p_canvas_ = std::make_shared<Canvas>("canvas");
-    p_canvas_->set_line();
+    p_canvas_->set_type(Canvas::ShapeType::kLine);
 }
 Demo::~Demo()
 {
@@ -68,7 +68,8 @@ void Demo::draw_image()
 }
 void Demo::draw_open_image_file_dialog()
 {
-    IGFD::FileDialogConfig config; config.path = ".";
+    IGFD::FileDialogConfig config;
+    config.path = ".";
     ImGuiFileDialog::Instance()->OpenDialog(
         "ChooseImageOpenFileDlg", "Choose Image File", ".png,.jpg", config);
     if (ImGuiFileDialog::Instance()->Display("ChooseImageOpenFileDlg"))
@@ -78,7 +79,7 @@ void Demo::draw_open_image_file_dialog()
             std::string filePathName =
                 ImGuiFileDialog::Instance()->GetFilePathName();
             std::string label = filePathName;
-            p_image_ = std::make_shared<Image>(label, filePathName);
+            p_image_ = std::make_shared<ImageEditor>(label, filePathName);
             p_canvas_->clear();
         }
         ImGuiFileDialog::Instance()->Close();

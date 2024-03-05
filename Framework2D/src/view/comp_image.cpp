@@ -1,50 +1,63 @@
 #include "view/comp_image.h"
+
+#include <stdexcept>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "iostream"
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 namespace USTC_CG
 {
-Image::Image(const std::string& label, const std::string& filename)
-    : Component(label),
-      filename_(filename)
+ImageEditor::ImageEditor(const std::string& label, const std::string& filename)
+    : filename_(filename),
+      Component(label)
 {
     glGenTextures(1, &tex_id_);
-    image_data_ =
-        stbi_load(filename.c_str(), &image_width_, &image_height_, nullptr, 4);
-    if (image_data_ == nullptr)
+    auto image_data =
+        stbi_load(filename.c_str(), &image_width_, &image_height_, NULL, 4);
+    if (image_data == nullptr)
+    {
         std::cout << "Failed to load image from file " << filename << std::endl;
+        data_ = std::make_shared<Image>(image_width_, image_height_, 4);
+    }
     else
-        load_gltexture();
+    {
+        std::cout << "Successfully load image from file " << filename
+                  << std::endl;
+        std::unique_ptr<unsigned char[]> tmp(image_data);
+        data_ = std::make_shared<Image>(
+            image_width_, image_height_, 4, std::move(tmp));
+    }
+    load_gltexture();
 }
 
-Image::~Image()
+ImageEditor::~ImageEditor()
 {
-    if (image_data_)
-        stbi_image_free(image_data_);
     glDeleteTextures(1, &tex_id_);
 }
 
-void Image::draw()
+void ImageEditor::draw()
 {
     draw_image();
 }
 
-void Image::set_position(const ImVec2& pos)
+void ImageEditor::set_position(const ImVec2& pos)
 {
     position_ = pos;
 }
 
-ImVec2 Image::get_image_size() const
+ImVec2 ImageEditor::get_image_size() const
 {
     return { static_cast<float>(image_width_),
              static_cast<float>(image_height_) };
 }
 
-void Image::draw_image() const
+void ImageEditor::draw_image() const
 {
     auto draw_list = ImGui::GetWindowDrawList();
-    if (image_data_)
+    if (data_)
     {
         ImVec2 p_min = position_;
         ImVec2 p_max = ImVec2(
@@ -54,7 +67,26 @@ void Image::draw_image() const
     }
 }
 
-void Image::load_gltexture() const
+void ImageEditor::update()
+{
+    load_gltexture();
+}
+
+void ImageEditor::save_to_disk(const std::string& filename)
+{
+    if (data_)
+    {
+        stbi_write_png(
+            filename.c_str(),
+            data_->width(),
+            data_->height(),
+            data_->channels(),
+            data_->data(),
+            data_->width() * data_->channels());
+    }
+}
+
+void ImageEditor::load_gltexture() const
 {
     glBindTexture(GL_TEXTURE_2D, tex_id_);
 
@@ -72,6 +104,6 @@ void Image::load_gltexture() const
         0,
         GL_RGBA,
         GL_UNSIGNED_BYTE,
-        image_data_);
+        data_->data());
 }
 }  // namespace USTC_CG
