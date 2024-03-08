@@ -1,8 +1,8 @@
 # 作业说明
 
-> 旧版资料：https://rec.ustc.edu.cn/share/fe136800-dc93-11ee-a2ce-ad2c97024b07
+> 旧版资料：<https://rec.ustc.edu.cn/share/fe136800-dc93-11ee-a2ce-ad2c97024b07>
 >
-> **只须看其 demo 目录的可执行程序及操作演示** 
+> **只须看其 demo 目录的可执行程序及操作演示**
 
 ## 学习过程
 
@@ -18,7 +18,7 @@
 
 <div align=center><img width = 50% src ="../data/test.png"/></div align>
 
-- 作业实验报告范例：[示例参考](https://rec.ustc.edu.cn/share/97ce81a0-dc93-11ee-8634-cbdc421a711c) 
+- 作业实验报告范例：[示例参考](https://rec.ustc.edu.cn/share/97ce81a0-dc93-11ee-8634-cbdc421a711c)
 
 ### 其他测试图片
 
@@ -37,4 +37,3 @@
 - 目录不要用中文名，否则编译会出错。要习惯用英文来思考，包括代码注释等。养成使用英文的习惯！
 
 - 务必自己独立完成该作业，做得不好没有关系，我们会指出你的问题，一步一步帮你理解该作业需要你所理解的东西，这点极其重要！只有不断从失败中改正才能有长进！我们会帮你逐步纠正错误。
-

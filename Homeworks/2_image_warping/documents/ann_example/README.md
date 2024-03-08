@@ -1,12 +1,13 @@
 # ANN 示例
 
 ## 目录结构
-```
+
+```txt
 ann_example/
 ├── CMakeLists.txt      // CMake 配置文件
-└── src/                
+└── src/
     ├── _deps/          // ANN 相关头文件放在这里
-    └── ann_example.cpp // 测试代码  
+    └── ann_example.cpp // 测试代码
 ```
 
 ## 使用说明
@@ -17,12 +18,11 @@ ann_example/
 
 - Step 2: 在 CMake 中使用 `target_include_directory` 为项目添加包含目录 `_deps/` （已经写好）。
 
-- Step 3: CMake 配置生成即可，此时在 `ann_example.cpp` 中可以找到头文件 
+- Step 3: CMake 配置生成即可，此时在 `ann_example.cpp` 中可以找到头文件
 
 ```cpp
 #include <annoylib.h>
 ```
-
 
 ## 如何在作业项目中使用
 

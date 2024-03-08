@@ -29,7 +29,7 @@ Step 0:
 
 获取 third_party 中的子仓库：
 
-```
+```bash
 git submodule update --init --recursive
 ```
 
@@ -42,7 +42,7 @@ Step 1: 首先确保 VS Code 中安装了必要的 C++ 、CMake 扩展（C/C++, 
 Step 2: 在项目根目录用 VS Code 打开
 
 ```shell
-> cd /your/path/to/Framework2D/ 
+> cd /your/path/to/Framework2D/
 > code .
 ```
 

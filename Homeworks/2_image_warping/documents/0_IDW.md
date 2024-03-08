@@ -1,4 +1,4 @@
-# Inverse distance-weighted interpolation methods[^IDW] 
+# Inverse distance-weighted interpolation methods[^IDW]
 
 ## 问题描述
 
@@ -32,12 +32,12 @@ $$
 
   $$w_i(\boldsymbol{p}) = \dfrac{\sigma_i(\boldsymbol{p})}{\displaystyle\sum_{j=1}^n\sigma_j(\boldsymbol{p})},$$
 
-  可选 $\sigma_i(\boldsymbol{p}) = \dfrac{1}{\Vert\boldsymbol{p} - \boldsymbol{p}_i\Vert^\mu}$ ， $\mu > 1$. 
+  可选 $\sigma_i(\boldsymbol{p}) = \dfrac{1}{\Vert\boldsymbol{p} - \boldsymbol{p}_i\Vert^\mu}$ ， $\mu > 1$.
 
-- 映射 $f_i: \mathbb{R}^2\to\mathbb{R}^2$ 形如 
-  
+- 映射 $f_i: \mathbb{R}^2\to\mathbb{R}^2$ 形如
+
   $$f_i(\boldsymbol{p})=\boldsymbol{q}_i+\boldsymbol{D}_i(\boldsymbol{p}-\boldsymbol{p}_i),$$
-  
+
   其中 $\boldsymbol{D} _ i:\mathbb{R}^2\to\mathbb{R}^2$ ，满足 $\boldsymbol{D} _ i(\boldsymbol{0})=\boldsymbol{0}$ . 可选 $\boldsymbol{D} _ i$ 为线性变换，即 $\boldsymbol{D}_i \in \mathbb{R}^{2\times 2}$ .
 
 简单地，可直接取 $\boldsymbol{D}_i=\boldsymbol{0}$，此时
@@ -54,5 +54,4 @@ $$
 
 ## 参考文献
 
-[^IDW]: Ruprecht D, Muller H. [**Image warping with scattered data interpolation**](https://ieeexplore.ieee.org/document/365004)[J]. IEEE Computer Graphics and Applications, 1995, 15(2): 37-43.
-
+[^IDW]: Ruprecht D, Muller H. [**Image warping with scattered data interpolation**][https://ieeexplore.ieee.org/document/365004](J). IEEE Computer Graphics and Applications, 1995, 15(2): 37-43.
