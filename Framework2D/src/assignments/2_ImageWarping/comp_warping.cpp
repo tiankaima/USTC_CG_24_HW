@@ -111,7 +111,7 @@ void CompWarping::warping()
     // the selected points.
     // You can design a class for such warping operations, utilizing the
     // encapsulation, inheritance, and polymorphism features of C++. More files
-    // like "*.h", "*.cpp" can be added to this directory or anywhere you like.
+    // like "*.h", "*.cpp" can be added to this directory, or anywhere you like.
 
     // Create a new image to store the result
     Image warped_image(*data_);
@@ -217,10 +217,10 @@ void CompWarping::init_selections()
 std::pair<int, int>
 CompWarping::fisheye_warping(int x, int y, int width, int height)
 {
-    float center_x = width / 2.0f;
-    float center_y = height / 2.0f;
-    float dx = x - center_x;
-    float dy = y - center_y;
+    float center_x = (float)width / 2.0f;
+    float center_y = (float)height / 2.0f;
+    float dx = (float)x - center_x;
+    float dy = (float)y - center_y;
     float distance = std::sqrt(dx * dx + dy * dy);
 
     // Simple non-linear transformation r -> r' = f(r)

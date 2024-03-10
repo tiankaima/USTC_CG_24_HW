@@ -9,7 +9,7 @@ class CompWarping : public ImageEditor
 {
    public:
     explicit CompWarping(const std::string& label, const std::string& filename);
-    virtual ~CompWarping() noexcept = default;
+    ~CompWarping() noexcept override = default;
 
     void draw() override;
 
@@ -37,7 +37,7 @@ class CompWarping : public ImageEditor
 
    private:
     // A simple "fish-eye" warping function
-    std::pair<int, int> fisheye_warping(int x, int y, int width, int height);
+    static std::pair<int, int> fisheye_warping(int x, int y, int width, int height);
 };
 
 }  // namespace USTC_CG

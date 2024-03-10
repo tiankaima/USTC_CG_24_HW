@@ -2,16 +2,17 @@
 
 #include <memory>
 
-#include "view/window.h"
 #include "comp_warping.h"
+#include "view/window.h"
 
 namespace USTC_CG
 {
 class ImageWarping : public Window
 {
    public:
-    explicit ImageWarping(const std::string& window_name);
-    ~ImageWarping();
+    explicit ImageWarping(const std::string& window_name)
+        : Window(window_name){};
+    ~ImageWarping() = default;
 
     void draw();
 

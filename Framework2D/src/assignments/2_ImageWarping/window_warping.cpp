@@ -4,14 +4,10 @@
 
 #include <iostream>
 
+#include "view/shapes/shape.h"  // for ImVec2 ops.
+
 namespace USTC_CG
 {
-ImageWarping::ImageWarping(const std::string& window_name) : Window(window_name)
-{
-}
-ImageWarping::~ImageWarping()
-{
-}
 void ImageWarping::draw()
 {
     draw_toolbar();
@@ -90,10 +86,7 @@ void ImageWarping::draw_image()
     const auto& canvas_size = ImGui::GetContentRegionAvail();
     const auto& image_size = p_image_->get_image_size();
     // Center the image in the window
-    ImVec2 pos = ImVec2(
-        canvas_min.x + canvas_size.x / 2 - image_size.x / 2,
-        canvas_min.y + canvas_size.y / 2 - image_size.y / 2);
-    p_image_->set_position(pos);
+    p_image_->set_position(canvas_min + canvas_size / 2 - image_size / 2);
     p_image_->draw();
 }
 void ImageWarping::draw_open_image_file_dialog()
@@ -135,7 +128,7 @@ void ImageWarping::draw_save_image_file_dialog()
         {
             std::string filePathName =
                 ImGuiFileDialog::Instance()->GetFilePathName();
-            std::string label = filePathName;
+            //            std::string label = filePathName;
             if (p_image_)
                 p_image_->save_to_disk(filePathName);
         }

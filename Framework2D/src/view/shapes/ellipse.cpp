@@ -3,9 +3,7 @@
 #include <imgui.h>
 
 #include <cmath>
-
 #include "iostream"
-using std::cout, std::endl;
 
 namespace USTC_CG
 {
