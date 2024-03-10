@@ -12,9 +12,9 @@ class ImageWarping : public Window
    public:
     explicit ImageWarping(const std::string& window_name)
         : Window(window_name){};
-    ~ImageWarping() = default;
+    ~ImageWarping() override = default;
 
-    void draw();
+    void draw() override;
 
    private:
     void draw_toolbar();

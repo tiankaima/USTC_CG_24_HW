@@ -65,14 +65,17 @@ void ImageWarping::draw_toolbar()
             p_image_->init_selections();
             p_image_->enable_selecting(true);
         }
-        if (ImGui::MenuItem("Warping") && p_image_)
+        for(auto type : CompWarping::all_types())
         {
-            p_image_->enable_selecting(false);
-            p_image_->warping();
-            p_image_->init_selections();
+            if (ImGui::MenuItem(CompWarping::name(type).c_str()) && p_image_)
+            {
+                p_image_->enable_selecting(false);
+                p_image_->warping(type);
+                p_image_->init_selections();
+            }
+            ImGui::Separator();
         }
-        // HW2_TODO: You can add more interactions for IDW, RBF, etc.
-        ImGui::Separator();
+
         if (ImGui::MenuItem("Restore") && p_image_)
         {
             p_image_->restore();

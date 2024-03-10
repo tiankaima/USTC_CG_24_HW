@@ -1,10 +1,14 @@
 #include "comp_warping.h"
 
 #include <cmath>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "view/warps/warp.h"
 
 namespace USTC_CG
 {
-using uchar = unsigned char;
 
 CompWarping::CompWarping(const std::string& label, const std::string& filename)
     : ImageEditor(label, filename)
@@ -32,9 +36,9 @@ void CompWarping::invert()
             data_->set_pixel(
                 i,
                 j,
-                { static_cast<uchar>(255 - color[0]),
-                  static_cast<uchar>(255 - color[1]),
-                  static_cast<uchar>(255 - color[2]) });
+                { static_cast<unsigned char>(255 - color[0]),
+                  static_cast<unsigned char>(255 - color[1]),
+                  static_cast<unsigned char>(255 - color[2]) });
         }
     }
     // After change the image, we should reload the image data to the renderer
@@ -46,47 +50,21 @@ void CompWarping::mirror(bool is_horizontal, bool is_vertical)
     int width = data_->width();
     int height = data_->height();
 
-    if (is_horizontal)
-    {
-        if (is_vertical)
-        {
-            for (int i = 0; i < width; ++i)
-            {
-                for (int j = 0; j < height; ++j)
-                {
-                    data_->set_pixel(
-                        i,
-                        j,
-                        image_tmp.get_pixel(width - 1 - i, height - 1 - j));
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < width; ++i)
-            {
-                for (int j = 0; j < height; ++j)
-                {
-                    data_->set_pixel(
-                        i, j, image_tmp.get_pixel(width - 1 - i, j));
-                }
-            }
-        }
-    }
-    else
-    {
-        if (is_vertical)
-        {
-            for (int i = 0; i < width; ++i)
-            {
-                for (int j = 0; j < height; ++j)
-                {
-                    data_->set_pixel(
-                        i, j, image_tmp.get_pixel(i, height - 1 - j));
-                }
-            }
-        }
-    }
+    if (is_horizontal && is_vertical)
+        for (int i = 0; i < width; ++i)
+            for (int j = 0; j < height; ++j)
+                data_->set_pixel(
+                    i, j, image_tmp.get_pixel(width - 1 - i, height - 1 - j));
+
+    if (is_horizontal && !is_vertical)
+        for (int i = 0; i < width; ++i)
+            for (int j = 0; j < height; ++j)
+                data_->set_pixel(i, j, image_tmp.get_pixel(width - 1 - i, j));
+
+    if (!is_horizontal && is_vertical)
+        for (int i = 0; i < width; ++i)
+            for (int j = 0; j < height; ++j)
+                data_->set_pixel(i, j, image_tmp.get_pixel(i, height - 1 - j));
 
     // After change the image, we should reload the image data to the renderer
     update();
@@ -98,44 +76,38 @@ void CompWarping::gray_scale()
         for (int j = 0; j < data_->height(); ++j)
         {
             const auto color = data_->get_pixel(i, j);
-            uchar gray_value = (color[0] + color[1] + color[2]) / 3;
+            unsigned char gray_value = (color[0] + color[1] + color[2]) / 3;
             data_->set_pixel(i, j, { gray_value, gray_value, gray_value });
         }
     }
     // After change the image, we should reload the image data to the renderer
     update();
 }
-void CompWarping::warping()
+void CompWarping::warping(WarpType type)
 {
-    // HW2_TODO: You should implement your own warping function that interpolate
-    // the selected points.
-    // You can design a class for such warping operations, utilizing the
-    // encapsulation, inheritance, and polymorphism features of C++. More files
-    // like "*.h", "*.cpp" can be added to this directory, or anywhere you like.
+    if (start_points_.empty())
+        return;
+    std::shared_ptr<Warp> warp = create_warp(
+        type,
+        ImVec2((float)data_->width(), (float)data_->height()),
+        start_points_,
+        end_points_);
 
-    // Create a new image to store the result
+    warp->warmup();
+
+    // Create a new image to store the result, init as black
     Image warped_image(*data_);
-    // Initialize the color of result image
     for (int y = 0; y < data_->height(); ++y)
-    {
         for (int x = 0; x < data_->width(); ++x)
-        {
             warped_image.set_pixel(x, y, { 0, 0, 0 });
-        }
-    }
 
-    // Example: (simplified) "fish-eye" warping
-    // For each (x, y) from the input image, the "fish-eye" warping transfer it
-    // to (x', y') in the new image:
-    // Note: For this transformation ("fish-eye" warping), one can also
-    // calculate the inverse (x', y') -> (x, y) to fill in the "gaps".
     for (int y = 0; y < data_->height(); ++y)
-    {
         for (int x = 0; x < data_->width(); ++x)
         {
-            // Apply warping function to (x, y), and we can get (x', y')
-            auto [new_x, new_y] =
-                fisheye_warping(x, y, data_->width(), data_->height());
+            auto p = warp->warp(Eigen::Vector2f((float)x, (float)y));
+            auto new_x = static_cast<int>(p(0));
+            auto new_y = static_cast<int>(p(1));
+
             // Copy the color from the original image to the result image
             if (new_x >= 0 && new_x < data_->width() && new_y >= 0 &&
                 new_y < data_->height())
@@ -144,7 +116,6 @@ void CompWarping::warping()
                 warped_image.set_pixel(new_x, new_y, pixel);
             }
         }
-    }
 
     *data_ = std::move(warped_image);
     update();
@@ -212,29 +183,5 @@ void CompWarping::init_selections()
 {
     start_points_.clear();
     end_points_.clear();
-}
-
-std::pair<int, int>
-CompWarping::fisheye_warping(int x, int y, int width, int height)
-{
-    float center_x = (float)width / 2.0f;
-    float center_y = (float)height / 2.0f;
-    float dx = (float)x - center_x;
-    float dy = (float)y - center_y;
-    float distance = std::sqrt(dx * dx + dy * dy);
-
-    // Simple non-linear transformation r -> r' = f(r)
-    float new_distance = std::sqrt(distance) * 10;
-
-    if (distance == 0)
-    {
-        return { static_cast<int>(center_x), static_cast<int>(center_y) };
-    }
-    // (x', y')
-    float ratio = new_distance / distance;
-    int new_x = static_cast<int>(center_x + dx * ratio);
-    int new_y = static_cast<int>(center_y + dy * ratio);
-
-    return { new_x, new_y };
 }
 }  // namespace USTC_CG

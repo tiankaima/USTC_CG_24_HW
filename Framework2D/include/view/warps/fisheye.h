@@ -3,7 +3,7 @@
 
 namespace USTC_CG
 {
-class IDW : public Warp
+class FishEye : public Warp
 {
    public:
     using Warp::Warp;
@@ -11,9 +11,5 @@ class IDW : public Warp
     void warmup() override;
 
     Eigen::Vector2f warp(const Eigen::Vector2f& point) override;
-
-   private:
-    // Transform matrix D:
-    std::vector<Eigen::Matrix2f> Ds_;
 };
 }  // namespace USTC_CG

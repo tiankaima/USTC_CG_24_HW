@@ -1,6 +1,10 @@
 #pragma once
 
 #include "view/comp_image.h"
+#include "view/warps/fisheye.h"
+#include "view/warps/idw.h"
+#include "view/warps/rbf.h"
+#include "view/warps/warp.h"
 
 namespace USTC_CG
 {
@@ -13,11 +17,61 @@ class CompWarping : public ImageEditor
 
     void draw() override;
 
+    enum class WarpType
+    {
+        kDefault,
+        kIDW,
+        kRBF,
+        kFishEye,
+    };
+
+    static constexpr std::vector<WarpType> all_types()
+    {
+        return { WarpType::kDefault,
+                 WarpType::kIDW,
+                 WarpType::kRBF,
+                 WarpType::kFishEye };
+    }
+
+    static constexpr std::string name(const WarpType& type)
+    {
+        switch (type)
+        {
+            case WarpType::kDefault: return "Default";
+            case WarpType::kIDW: return "IDW";
+            case WarpType::kRBF: return "RBF";
+            case WarpType::kFishEye: return "FishEye";
+            default: return "Unknown";
+        }
+    }
+
+    static std::shared_ptr<Warp> create_warp(
+        WarpType type,
+        const ImVec2& size,
+        const std::vector<ImVec2>& start_points,
+        const std::vector<ImVec2>& end_points)
+    {
+        switch (type)
+        {
+            case WarpType::kDefault:  //
+                return nullptr;
+            case WarpType::kIDW:  //
+                return std::make_shared<IDW>(size, start_points, end_points);
+            case WarpType::kRBF:  //
+                return std::make_shared<RBF>(size, start_points, end_points);
+            case WarpType::kFishEye:  //
+                return std::make_shared<FishEye>(
+                    size, start_points, end_points);
+            default:  //
+                return nullptr;
+        }
+    }
+
     // Simple edit functions
     void invert();
     void mirror(bool is_horizontal, bool is_vertical);
     void gray_scale();
-    void warping();
+    void warping(WarpType type);
     void restore();
 
     // Point selecting interaction
@@ -34,10 +88,6 @@ class CompWarping : public ImageEditor
     ImVec2 start_, end_;
     bool flag_enable_selecting_points_ = false;
     bool draw_status_ = false;
-
-   private:
-    // A simple "fish-eye" warping function
-    static std::pair<int, int> fisheye_warping(int x, int y, int width, int height);
 };
 
 }  // namespace USTC_CG

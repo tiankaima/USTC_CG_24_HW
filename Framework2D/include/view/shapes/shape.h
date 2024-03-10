@@ -1,4 +1,6 @@
 #pragma once
+#include <cmath>
+
 #include "imgui.h"
 
 using IM_COL32_D = decltype(IM_COL32(0, 0, 0, 0));
@@ -57,9 +59,26 @@ inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs)
     return { lhs.x - rhs.x, lhs.y - rhs.y };
 }
 
-inline ImVec2 operator/(const ImVec2& lhs, float rhs)
+inline ImVec2 operator*(const ImVec2& lhs, double rhs)
 {
-    return { lhs.x / rhs, lhs.y / rhs };
+    return { lhs.x * (float)rhs, lhs.y * (float)rhs };
+}
+
+inline ImVec2 operator/(const ImVec2& lhs, double rhs)
+{
+    return { lhs.x / (float)rhs, lhs.y / (float)rhs };
+}
+
+inline ImVec2 from_theta(double theta, double r = 1)
+{
+    return { static_cast<float>(r * cos(theta)),
+             static_cast<float>(r * sin(theta)) };
+}
+
+inline auto distance(const ImVec2& lhs, const ImVec2& rhs)
+{
+    return std::sqrt(
+        (lhs.x - rhs.x) * (lhs.x - rhs.x) + (lhs.y - rhs.y) * (lhs.y - rhs.y));
 }
 
 /**
