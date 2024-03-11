@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "Eigen/Dense"
 
 namespace USTC_CG
 {
