@@ -6,29 +6,28 @@ namespace USTC_CG
 {
 void RBF::warmup()
 {
-    this->min_radius_.clear();
-    this->min_radius_.resize(this->control_points_.size(), 0);
+    min_radius_.clear();
+    min_radius_.resize(control_points_.size(), 0);
     if (control_points_.size() <= 1)
     {
-        this->min_radius_[0] = 0;
+        min_radius_[0] = 0;
     }
     else
     {
-        for (auto i = 0; i < this->control_points_.size(); i++)
+        for (auto i = 0; i < control_points_.size(); i++)
         {
             float min = std::numeric_limits<float>::max();
-            for (auto j = 0; j < this->control_points_.size(); j++)
+            for (auto j = 0; j < control_points_.size(); j++)
             {
                 if (i == j)
                     continue;
 
                 float distance =
-                    (this->control_points_[i] - this->control_points_[j])
-                        .norm();
+                    (control_points_[i] - control_points_[j]).norm();
                 if (distance < min)
                     min = distance;
             }
-            this->min_radius_[i] = min;
+            min_radius_[i] = min;
         }
     }
 

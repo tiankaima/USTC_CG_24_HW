@@ -12,11 +12,11 @@ namespace USTC_CG
  */
 void IDW::warmup()
 {
-    this->Ds_.clear();
-    this->Ds_.resize(control_points_.size());
+    Ds_.clear();
+    Ds_.resize(control_points_.size());
     for (auto i = 0; i < control_points_.size(); i++)
     {
-        this->Ds_[i] = Eigen::Matrix2f::Identity();
+        Ds_[i] = Eigen::Matrix2f::Identity();
     }
 
     if (control_points_.size() == 1)
@@ -60,8 +60,8 @@ void IDW::warmup()
         b_2 = co.colPivHouseholderQr().solve(b_2);
         for (auto m : { 0, 1 })
         {
-            this->Ds_[i](0, m) = b_1(m);
-            this->Ds_[i](1, m) = b_2(m);
+            Ds_[i](0, m) = b_1(m);
+            Ds_[i](1, m) = b_2(m);
         }
     }
 }

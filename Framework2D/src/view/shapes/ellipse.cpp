@@ -40,7 +40,7 @@ void Ellipse::update(ImVec2 point)
         auto radius = std::min(
             std::abs(point.x - start_point_.x),
             std::abs(point.y - start_point_.y));
-        this->end_point_ = ImVec2(
+        end_point_ = ImVec2(
             (point.x > start_point_.x) ? start_point_.x + radius
                                       : start_point_.x - radius,
             (point.y > start_point_.y) ? start_point_.y + radius
@@ -49,6 +49,6 @@ void Ellipse::update(ImVec2 point)
         return;
     }
 
-    this->end_point_ = point;
+    end_point_ = point;
 }
 }  // namespace USTC_CG

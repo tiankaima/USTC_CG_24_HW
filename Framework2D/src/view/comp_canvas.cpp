@@ -39,7 +39,7 @@ void Canvas::draw()
     {
         if (draw_status_)
         {
-            this->finish_drawing();
+            finish_drawing();
         }
     }
 
@@ -194,7 +194,7 @@ void Canvas::mouse_click_event()
             return;
         }
 
-        this->finish_drawing();
+        finish_drawing();
     }
 }
 

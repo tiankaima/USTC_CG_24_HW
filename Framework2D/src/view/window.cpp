@@ -59,7 +59,7 @@ void Window::run()
         else
         {
             glfwPollEvents();
-            this->render();
+            render();
         }
     }
 }

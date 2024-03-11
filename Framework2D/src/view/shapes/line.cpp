@@ -18,6 +18,6 @@ void Line::draw(const Config& config) const
 
 void Line::update(ImVec2 point)
 {
-    this->end_point_ = point;
+    end_point_ = point;
 }
 }  // namespace USTC_CG

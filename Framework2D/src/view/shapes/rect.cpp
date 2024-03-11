@@ -25,7 +25,7 @@ void Rect::update(ImVec2 point)
         auto width = std::abs(point.x - start_point_.x);
         auto height = std::abs(point.y - start_point_.y);
         auto min = std::min(width, height);
-        this->end_point_ = ImVec2(
+        end_point_ = ImVec2(
             (point.x > start_point_.x) ? start_point_.x + min
                                       : start_point_.x - min,
             (point.y > start_point_.y) ? start_point_.y + min
@@ -33,7 +33,7 @@ void Rect::update(ImVec2 point)
         return;
     }
 
-    this->end_point_ = point;
+    end_point_ = point;
 }
 
 }  // namespace USTC_CG
