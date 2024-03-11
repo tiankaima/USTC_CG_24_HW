@@ -1,12 +1,12 @@
 #pragma once
 #include <imgui.h>
 #include <view/image.h>
-#include <view/shapes/shape.h>
 
 #include <vector>
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
+#include "imgui.h"
 
 namespace USTC_CG
 {

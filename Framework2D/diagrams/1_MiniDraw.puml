@@ -187,6 +187,6 @@ C_0000153274574836037070 --> C_0001743666612445748179 : +shape
 C_0002197955776814560432 --> C_0000190544974973925391 : -p_canvas_
 C_0000701994109645822129 <|-- C_0002197955776814560432
 
-'Generated with clang-uml, version 0.5.0-13-g52b72f3
+'Generated with clang-uml, version 0.5.1-3-g0fac87c
 'LLVM version clang version 16.0.6
 @enduml
