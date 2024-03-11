@@ -10,3 +10,6 @@
 [submodule "Framework2D/third_party/Eigen"]
 	path = Framework2D/third_party/Eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "Framework2D/third_party/annoy"]
+	path = Framework2D/third_party/annoy
+	url = https://github.com/spotify/annoy

@@ -1,6 +1,10 @@
 #include "comp_warping.h"
 
+#include <annoylib.h>
+#include <kissrandom.h>
+
 #include <cmath>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -87,19 +91,36 @@ void CompWarping::warping(WarpType type)
 {
     if (start_points_.empty())
         return;
+
     std::shared_ptr<Warp> warp = create_warp(
         type,
         ImVec2((float)data_->width(), (float)data_->height()),
         start_points_,
         end_points_);
-
     warp->warmup();
 
-    // Create a new image to store the result, init as black
+    // Create a new image, init as black
     Image warped_image(*data_);
     for (int y = 0; y < data_->height(); ++y)
         for (int x = 0; x < data_->width(); ++x)
             warped_image.set_pixel(x, y, { 0, 0, 0 });
+
+    // Mask to store which pixel has been filled
+    std::vector<std::vector<unsigned char>> mask(
+        data_->width(),
+        std::vector<unsigned char>(
+            data_->height(),
+            0));  // using unsigned char since vector<bool> is bullshit
+
+    // Ann index
+    Annoy::AnnoyIndex<
+        int,
+        float,
+        Annoy::Euclidean,
+        Annoy::Kiss64Random,
+        Annoy::AnnoyIndexSingleThreadedBuildPolicy>
+        ann(2);
+    int ann_counts = 0;
 
     for (int y = 0; y < data_->height(); ++y)
         for (int x = 0; x < data_->width(); ++x)
@@ -114,8 +135,33 @@ void CompWarping::warping(WarpType type)
             {
                 std::vector<unsigned char> pixel = data_->get_pixel(x, y);
                 warped_image.set_pixel(new_x, new_y, pixel);
+
+                mask[new_x][new_y] = 1;
+
+                auto vec = new float[2];
+                vec[0] = (float)new_x;
+                vec[1] = (float)new_y;
+                ann.add_item(ann_counts++, vec);
             }
         }
+
+    ann.build(2);
+    for (int y = 0; y < data_->height(); ++y)
+        for (int x = 0; x < data_->width(); ++x)
+            if (!mask[x][y])
+            {
+                auto vec = new float[2];
+                vec[0] = (float)x;
+                vec[1] = (float)y;
+                std::vector<int> indices;
+                ann.get_nns_by_vector(vec, 1, 1, &indices, nullptr);
+
+                auto pos = new float[2];
+                ann.get_item(indices[0], pos);
+                std::vector<unsigned char> pixel =
+                    warped_image.get_pixel((int)pos[0], (int)pos[1]);
+                warped_image.set_pixel(x, y, pixel);
+            }
 
     *data_ = std::move(warped_image);
     update();
