@@ -11,10 +11,6 @@ WindowPoisson::WindowPoisson(const std::string& window_name)
 {
 }
 
-WindowPoisson::~WindowPoisson()
-{
-}
-
 void WindowPoisson::draw()
 {
     draw_toolbar();
@@ -203,7 +199,6 @@ void WindowPoisson::draw_save_image_file_dialog()
         {
             std::string filePathName =
                 ImGuiFileDialog::Instance()->GetFilePathName();
-            std::string label = filePathName;
             if (p_target_)
                 p_target_->save_to_disk(filePathName);
         }
@@ -211,7 +206,7 @@ void WindowPoisson::draw_save_image_file_dialog()
         flag_save_file_dialog_ = false;
     }
 }
-void WindowPoisson::add_tooltips(std::string desc)
+void WindowPoisson::add_tooltips(const std::string& desc)
 {
     if (ImGui::BeginItemTooltip())
     {

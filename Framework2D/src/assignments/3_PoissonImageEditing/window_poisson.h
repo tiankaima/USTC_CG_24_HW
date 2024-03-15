@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "view/window.h"
 #include "comp_source_image.h"
 #include "comp_target_image.h"
+#include "view/window.h"
 
 namespace USTC_CG
 {
@@ -12,9 +12,9 @@ class WindowPoisson : public Window
 {
    public:
     explicit WindowPoisson(const std::string& window_name);
-    ~WindowPoisson();
+    ~WindowPoisson() override = default;
 
-    void draw();
+    void draw() override;
 
    private:
     void draw_toolbar();
@@ -25,7 +25,7 @@ class WindowPoisson : public Window
     void draw_open_source_image_file_dialog();
     void draw_save_image_file_dialog();
 
-    void add_tooltips(std::string desc);
+    static void add_tooltips(const std::string& desc);
 
     // Target Image Component
     std::shared_ptr<CompTargetImage> p_target_ = nullptr;
