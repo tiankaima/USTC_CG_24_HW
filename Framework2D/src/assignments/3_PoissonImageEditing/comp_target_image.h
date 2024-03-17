@@ -9,7 +9,7 @@ class CompTargetImage : public ImageEditor
 {
    public:
     // HW3_TODO: Add more types of cloning
-    enum CloneType
+    enum class CloneType
     {
         kDefault = 0,
         kPaste = 1,
@@ -19,7 +19,7 @@ class CompTargetImage : public ImageEditor
     explicit CompTargetImage(
         const std::string& label,
         const std::string& filename);
-    virtual ~CompTargetImage() noexcept = default;
+    ~CompTargetImage() noexcept override = default;
 
     void draw() override;
     // Bind the source image component
@@ -39,7 +39,7 @@ class CompTargetImage : public ImageEditor
     std::shared_ptr<Image> back_up_;
     // Source image
     std::shared_ptr<CompSourceImage> source_image_;
-    CloneType clone_type_ = kDefault;
+    CloneType clone_type_ = CloneType::kDefault;
 
     ImVec2 mouse_position_;
     bool edit_status_ = false;

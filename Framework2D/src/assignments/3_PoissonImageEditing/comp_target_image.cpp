@@ -1,10 +1,10 @@
 #include "comp_target_image.h"
 
 #include <cmath>
+#include <utility>
 
 namespace USTC_CG
 {
-using uchar = unsigned char;
 
 CompTargetImage::CompTargetImage(
     const std::string& label,
@@ -53,7 +53,7 @@ void CompTargetImage::draw()
 
 void CompTargetImage::set_source(std::shared_ptr<CompSourceImage> source)
 {
-    source_image_ = source;
+    source_image_ = std::move(source);
 }
 
 void CompTargetImage::set_realtime(bool flag)
@@ -69,12 +69,12 @@ void CompTargetImage::restore()
 
 void CompTargetImage::set_paste()
 {
-    clone_type_ = kPaste;
+    clone_type_ = CloneType::kPaste;
 }
 
 void CompTargetImage::set_seamless()
 {
-    clone_type_ = kSeamless;
+    clone_type_ = CloneType::kSeamless;
 }
 
 void CompTargetImage::clone()
@@ -84,7 +84,7 @@ void CompTargetImage::clone()
     // cloning labeled by `clone_type_ ==kSeamless`.
     //
     // The realtime updating (update when the mouse is moving) is only available
-    // when the checkboard is selected. It is required to improve the efficiency
+    // when the checkbox is selected. It is required to improve the efficiency
     // of your seamless cloning to achieve realtime editing. (Use decomposition
     // of sparse matrix before solve the linear system)
     if (data_ == nullptr || source_image_ == nullptr ||
@@ -94,8 +94,8 @@ void CompTargetImage::clone()
 
     switch (clone_type_)
     {
-        case USTC_CG::CompTargetImage::kDefault: break;
-        case USTC_CG::CompTargetImage::kPaste:
+        case CompTargetImage::CloneType::kDefault: break;
+        case CompTargetImage::CloneType::kPaste:
         {
             restore();
 
@@ -121,7 +121,7 @@ void CompTargetImage::clone()
             }
             break;
         }
-        case USTC_CG::CompTargetImage::kSeamless:
+        case CompTargetImage::CloneType::kSeamless:
         {
             // You should delete this block and implement your own seamless
             // cloning. For each pixel in the selected region, calculate the
@@ -156,5 +156,4 @@ void CompTargetImage::clone()
 
     update();
 }
-
-}  // namespace USTC_CG
+} // namespace USTC_CG

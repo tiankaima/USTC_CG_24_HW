@@ -5,7 +5,6 @@
 
 namespace USTC_CG
 {
-using uchar = unsigned char;
 
 CompSourceImage::CompSourceImage(
     const std::string& label,
@@ -72,15 +71,15 @@ void CompSourceImage::select_region()
             // of the region.
             // We give an example of rectangle here.
             //
-            // For polygon or freehand regions, you should inplement the
+            // For polygon or freehand regions, you should implement the
             // "scanning line" algorithm, which is a well-known algorithm in CG.
             for (int i = 0; i < selected_region_->width(); ++i)
                 for (int j = 0; j < selected_region_->height(); ++j)
                     selected_region_->set_pixel(i, j, { 0 });
             switch (region_type_)
             {
-                case USTC_CG::CompSourceImage::kDefault: break;
-                case USTC_CG::CompSourceImage::kRect:
+                case CompSourceImage::kDefault: break;
+                case CompSourceImage::kRect:
                 {
                     for (int i = static_cast<int>(start_.x);
                          i < static_cast<int>(end_.x);
@@ -107,8 +106,8 @@ void CompSourceImage::select_region()
 
     switch (region_type_)
     {
-        case USTC_CG::CompSourceImage::kDefault: break;
-        case USTC_CG::CompSourceImage::kRect:
+        case CompSourceImage::kDefault: break;
+        case CompSourceImage::kRect:
         {
             if (e.x > s.x && e.y > s.y)
                 draw_list->AddRect(s, e, IM_COL32(255, 0, 0, 255), 2.0f);

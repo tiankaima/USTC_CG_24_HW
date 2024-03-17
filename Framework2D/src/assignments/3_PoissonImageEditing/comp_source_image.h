@@ -17,7 +17,7 @@ class CompSourceImage : public ImageEditor
     explicit CompSourceImage(
         const std::string& label,
         const std::string& filename);
-    virtual ~CompSourceImage() noexcept = default;
+    ~CompSourceImage() noexcept override = default;
 
     void draw() override;
 
@@ -29,7 +29,7 @@ class CompSourceImage : public ImageEditor
     // Get the image data
     std::shared_ptr<Image> get_data();
     // Get the position to locate the region in the target image
-    ImVec2 get_position() const;
+    [[nodiscard]] ImVec2 get_position() const;
 
    private:
     RegionType region_type_ = kRect;
