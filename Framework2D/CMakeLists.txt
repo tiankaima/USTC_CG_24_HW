@@ -5,7 +5,6 @@ project(
   VERSION 1.0
   LANGUAGES C CXX
 )
-add_compile_options(-std=c++20)
 add_compile_options(-msse2)
 
 set(CMAKE_CXX_STANDARD 20)

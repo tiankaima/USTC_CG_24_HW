@@ -23,7 +23,7 @@ class Poisson
         return { CloneType::kDefault, CloneType::kPaste, CloneType::kSeamless, CloneType::kMixed };
     }
 
-    constexpr static std::string CloneTypeName(CloneType type)
+    constexpr static std::string CloneTypeName(const CloneType& type)
     {
         switch (type)
         {

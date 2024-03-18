@@ -25,12 +25,12 @@ class CompWarping : public ImageEditor
         kFishEye,
     };
 
-    static constexpr std::vector<WarpType> all_types()
+    static constexpr std::vector<WarpType> WarpTypeList()
     {
         return { WarpType::kDefault, WarpType::kIDW, WarpType::kRBF, WarpType::kFishEye };
     }
 
-    static constexpr std::string name(const WarpType& type)
+    static constexpr std::string WarpTypeName(const WarpType& type)
     {
         switch (type)
         {

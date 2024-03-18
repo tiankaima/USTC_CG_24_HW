@@ -92,6 +92,20 @@ void WindowPoisson::draw_toolbar()
                 Poisson::CloneTypeName(type)));
         }
 
+        ImGui::Separator();
+
+        for (auto type : CompSourceImage::RegionTypeList())
+        {
+            if (ImGui::MenuItem(CompSourceImage::RegionTypeName(type).c_str()) && p_source_)
+            {
+                p_source_->set_region_type(type);
+            }
+            add_tooltips(std::format(
+                "Press this button and then click in the source image, to "
+                "select the region with {}.",
+                CompSourceImage::RegionTypeName(type)));
+        }
+
         ImGui::EndMainMenuBar();
     }
 }

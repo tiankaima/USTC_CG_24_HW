@@ -19,6 +19,15 @@ class CompTargetImage : public ImageEditor
     {
         clone_type_ = type;
     }
+    Poisson::CloneType get_clone_type() const
+    {
+        return clone_type_;
+    }
+    [[nodiscard]] std::string clone_type_name() const
+    {
+        return Poisson::CloneTypeName(clone_type_);
+    }
+
     void clone();
 
    private:

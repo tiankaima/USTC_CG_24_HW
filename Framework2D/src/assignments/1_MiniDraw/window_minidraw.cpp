@@ -22,9 +22,9 @@ void MiniDraw::draw_canvas()
     ImGui::SetNextWindowSize(viewport->WorkSize);
     if (ImGui::Begin("Canvas", &flag_show_canvas_view_, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
     {
-        for (const auto type : Canvas::all_types())
+        for (const auto type : Canvas::ShapeTypeList())
         {
-            if (ImGui::Button(Canvas::name(type).c_str()))
+            if (ImGui::Button(Canvas::ShapeTypeName(type).c_str()))
             {
                 p_canvas_->set_type(type);
             }

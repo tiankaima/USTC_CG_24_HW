@@ -27,9 +27,7 @@ class WindowPoisson : public Window
 
     static void add_tooltips(const std::string& desc);
 
-    // Target Image Component
     std::shared_ptr<CompTargetImage> p_target_ = nullptr;
-    // Source Image Component
     std::shared_ptr<CompSourceImage> p_source_ = nullptr;
 
     bool flag_show_target_view_ = true;

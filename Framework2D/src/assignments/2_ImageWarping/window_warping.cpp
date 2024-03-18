@@ -64,9 +64,9 @@ void ImageWarping::draw_toolbar()
             p_image_->init_selections();
             p_image_->enable_selecting(true);
         }
-        for (auto type : CompWarping::all_types())
+        for (auto type : CompWarping::WarpTypeList())
         {
-            if (ImGui::MenuItem(CompWarping::name(type).c_str()) && p_image_)
+            if (ImGui::MenuItem(CompWarping::WarpTypeName(type).c_str()) && p_image_)
             {
                 p_image_->enable_selecting(false);
                 p_image_->warping(type);

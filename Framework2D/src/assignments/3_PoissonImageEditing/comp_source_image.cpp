@@ -1,6 +1,7 @@
 #include "comp_source_image.h"
 
 #include <algorithm>
+#include <list>
 
 namespace USTC_CG
 {
@@ -33,33 +34,47 @@ void CompSourceImage::select_region()
         label_.c_str(), ImVec2(static_cast<float>(image_width_), static_cast<float>(image_height_)), ImGuiButtonFlags_MouseButtonLeft);
     // Record the current status of the invisible button
     bool is_hovered_ = ImGui::IsItemHovered();
-    // HW3_TODO(optional): You can add more shapes for region selection. You can
-    // also consider using the implementation in HW1. (We use rectangle for
-    // example)
     ImGuiIO& io = ImGui::GetIO();
-    if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !draw_status_)
     {
         draw_status_ = true;
-        start_ = end_ = ImVec2(
-            std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
-            std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_));
+        if (region_type_ == RegionType::kPolygon)
+        {
+            poly_points_ = {};
+            start_ = ImVec2(
+                std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
+                std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_));
+            poly_points_.push_back(start_);
+        }
+        else
+        {
+            start_ = end_ = ImVec2(
+                std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
+                std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_));
+        }
     }
     if (draw_status_)
     {
-        end_ = ImVec2(
-            std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
-            std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_));
-        if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        if (region_type_ == RegionType::kPolygon)
+        {
+            if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                poly_points_.pop_back();
+            }
+            poly_points_.push_back(ImVec2(
+                std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
+                std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_)));
+        }
+        else
+        {
+            end_ = ImVec2(
+                std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
+                std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_));
+        }
+        if ((!ImGui::IsMouseDown(ImGuiMouseButton_Left) && region_type_ != RegionType::kPolygon) ||
+            (ImGui::IsMouseDown(ImGuiMouseButton_Right) && region_type_ == RegionType::kPolygon))
         {
             draw_status_ = false;
-            // Update the selected region.
-            // HW3_TODO(optional): For other types of closed shapes, the most
-            // important part in region selection is to find the interior pixels
-            // of the region.
-            // We give an example of rectangle here.
-            //
-            // For polygon or freehand regions, you should implement the
-            // "scanning line" algorithm, which is a well-known algorithm in CG.
             for (int i = 0; i < selected_region_->width(); ++i)
                 for (int j = 0; j < selected_region_->height(); ++j)
                     selected_region_->set_pixel(i, j, { 0 });
@@ -79,6 +94,40 @@ void CompSourceImage::select_region()
                         }
                     }
                     break;
+                }
+                case CompSourceImage::RegionType::kPolygon:
+                {
+                    for (int i = 0; i < selected_region_->width(); ++i)
+                    {
+                        std::vector<int> intersections;
+                        for (int j = 0; j < poly_points_.size() - 1; j++)
+                        {
+                            ImVec2 p1 = poly_points_[j];
+                            ImVec2 p2 = poly_points_[j + 1];
+                            if ((p1.y > i && p2.y < i) || (p1.y < i && p2.y > i))
+                            {
+                                float x = p1.x + (i - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+                                intersections.push_back(static_cast<int>(x));
+                            }
+                        }
+                        // last -> 0:
+                        ImVec2 p1 = poly_points_[poly_points_.size() - 1];
+                        ImVec2 p2 = poly_points_[0];
+                        if ((p1.y > i && p2.y < i) || (p1.y < i && p2.y > i))
+                        {
+                            float x = p1.x + (i - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+                            intersections.push_back(static_cast<int>(x));
+                        }
+
+                        std::sort(intersections.begin(), intersections.end());
+                        for (int j = 0; j < intersections.size(); j += 2)
+                        {
+                            for (int k = intersections[j]; k < intersections[j + 1]; k++)
+                            {
+                                selected_region_->set_pixel(k, i, { 255 });
+                            }
+                        }
+                    }
                 }
                 default: break;
             }
@@ -106,6 +155,25 @@ void CompSourceImage::select_region()
             if (e.x > s.x && e.y > s.y)
                 draw_list->AddRect(s, e, IM_COL32(255, 0, 0, 255), 2.0f);
             break;
+        }
+        case CompSourceImage::RegionType::kPolygon:
+        {
+            if (poly_points_.size() > 1)
+            {
+                for (int i = 0; i < poly_points_.size() - 1; i++)
+                {
+                    draw_list->AddLine(
+                        ImVec2(poly_points_[i].x + position_.x, poly_points_[i].y + position_.y),
+                        ImVec2(poly_points_[i + 1].x + position_.x, poly_points_[i + 1].y + position_.y),
+                        IM_COL32(255, 0, 0, 255),
+                        2.0f);
+                }
+                draw_list->AddLine(
+                    ImVec2(poly_points_[poly_points_.size() - 1].x + position_.x, poly_points_[poly_points_.size() - 1].y + position_.y),
+                    ImVec2(poly_points_[0].x + position_.x, poly_points_[0].y + position_.y),
+                    IM_COL32(255, 0, 0, 255),
+                    2.0f);
+            }
         }
         default: break;
     }

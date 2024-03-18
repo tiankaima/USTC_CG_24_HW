@@ -38,12 +38,12 @@ class Canvas : public Component
         kFreehand = 5
     };
 
-    [[nodiscard]] static constexpr std::vector<ShapeType> all_types()
+    [[nodiscard]] static constexpr std::vector<ShapeType> ShapeTypeList()
     {
         return { ShapeType::kDefault, ShapeType::kLine, ShapeType::kRect, ShapeType::kEllipse, ShapeType::kPolygon, ShapeType::kFreehand };
     }
 
-    [[nodiscard]] static constexpr std::string name(const ShapeType& type)
+    [[nodiscard]] static constexpr std::string ShapeTypeName(const ShapeType& type)
     {
         switch (type)
         {
@@ -79,7 +79,7 @@ class Canvas : public Component
 
     [[nodiscard]] std::string shape_type_name() const
     {
-        return name(shape_type_);
+        return ShapeTypeName(shape_type_);
     }
 
     void set_type(ShapeType type);
