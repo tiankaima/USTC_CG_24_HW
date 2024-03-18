@@ -13,7 +13,8 @@ class CompTargetImage : public ImageEditor
     {
         kDefault = 0,
         kPaste = 1,
-        kSeamless = 2
+        kSeamless = 2,
+        kMixed = 3
     };
 
     explicit CompTargetImage(const std::string& label, const std::string& filename);
@@ -29,6 +30,7 @@ class CompTargetImage : public ImageEditor
     // HW3_TODO: Add more types of cloning
     void set_paste();
     void set_seamless();
+    void set_mixed();
     // The clone function
     void clone();
 

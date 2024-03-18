@@ -69,6 +69,11 @@ void CompTargetImage::set_seamless()
     clone_type_ = CloneType::kSeamless;
 }
 
+void CompTargetImage::set_mixed()
+{
+    clone_type_ = CloneType::kMixed;
+}
+
 void CompTargetImage::clone()
 {
     // The implementation of different types of cloning
@@ -106,12 +111,18 @@ void CompTargetImage::clone()
                 *source_image_->get_data());
             break;
         }
-        default:
+        case CompTargetImage::CloneType::kMixed:
         {
+            restore();
+            source_image_->get_poisson()->MixingPoisson(
+                { (int)(mouse_position_.x - source_image_->get_position().x), (int)(mouse_position_.y - source_image_->get_position().y) },
+                { 0, 0 },
+                *data_,
+                *source_image_->get_data());
             break;
         }
+        default: break;
     }
-
     update();
 }
 }  // namespace USTC_CG

@@ -106,8 +106,8 @@ void Poisson::GetPoisson(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int, 2
             if (inside_mask_(i, j) == 1)
             {
                 int index = index_matrix_(i, j);
-                int x = source_point_.y() + i;
-                int y = source_point_.x() + j;
+                int x = source_point_.x() + i;
+                int y = source_point_.y() + j;
 
                 auto temp_vec = convert_v(source_img_.get_pixel(x, y));
                 temp_vec *= 4;
@@ -122,27 +122,27 @@ void Poisson::GetPoisson(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int, 2
 
                 if (i == 0 || (i > 0 && inside_mask_(i - 1, j) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y() - 1, j + paste_point_.x())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y() - 1, j + paste_point_.x())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y() - 1, j + paste_point_.x())[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[2];
                 }
                 if (i == width_ - 1 || (i < width_ - 1 && inside_mask_(i + 1, j) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y() + 1, j + paste_point_.x())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y() + 1, j + paste_point_.x())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y() + 1, j + paste_point_.x())[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[2];
                 }
                 if (j == 0 || (j > 0 && inside_mask_(i, j - 1) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() - 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() - 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() - 1)[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[2];
                 }
                 if (j == height_ - 1 || (j < height_ - 1 && inside_mask_(i, j + 1) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() + 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() + 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() + 1)[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[2];
                 }
             }
         }
@@ -202,10 +202,10 @@ void Poisson::MixingPoisson(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int
             if (inside_mask_(i, j) == 1)
             {
                 int index = index_matrix_(i, j);
-                int x = source_point_.y() + i;
-                int y = source_point_.x() + j;
-                int x_ = paste_point_.y() + i;
-                int y_ = paste_point_.x() + j;
+                int x = source_point_.x() + i;
+                int y = source_point_.y() + j;
+                int x_ = paste_point_.x() + i;
+                int y_ = paste_point_.y() + j;
 
                 Eigen::Vector3d vec, temp_vec, temp_vec_paste;
 
@@ -239,27 +239,27 @@ void Poisson::MixingPoisson(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int
 
                 if (i == 0 || (i > 0 && inside_mask_(i - 1, j) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y() - 1, j + paste_point_.x())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y() - 1, j + paste_point_.x())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y() - 1, j + paste_point_.x())[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[2];
                 }
                 if (i == width_ - 1 || (i < width_ - 1 && inside_mask_(i + 1, j) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y() + 1, j + paste_point_.x())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y() + 1, j + paste_point_.x())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y() + 1, j + paste_point_.x())[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[2];
                 }
                 if (j == 0 || (j > 0 && inside_mask_(i, j - 1) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() - 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() - 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() - 1)[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[2];
                 }
                 if (j == height_ - 1 || (j < height_ - 1 && inside_mask_(i, j + 1) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() + 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() + 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.y(), j + paste_point_.x() + 1)[2];
+                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[0];
+                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[1];
+                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[2];
                 }
             }
         }
