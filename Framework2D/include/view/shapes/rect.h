@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 #include "shape.h"
 
@@ -12,9 +12,7 @@ class Rect : public Shape
    public:
     Rect() = default;
 
-    Rect(ImVec2 start_point, ImVec2 end_point)
-        : start_point_(start_point),
-          end_point_(end_point)
+    Rect(ImVec2 start_point, ImVec2 end_point) : start_point_(start_point), end_point_(end_point)
     {
     }
 

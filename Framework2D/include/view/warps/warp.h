@@ -13,11 +13,7 @@ namespace USTC_CG
 class Warp
 {
    public:
-    Warp(
-        const ImVec2& size,
-        const std::vector<ImVec2>& control_points,
-        const std::vector<ImVec2>& target_points)
-        : size_(size)
+    Warp(const ImVec2& size, const std::vector<ImVec2>& control_points, const std::vector<ImVec2>& target_points) : size_(size)
     {
         control_points_.resize(control_points.size());
         target_points_.resize(target_points.size());

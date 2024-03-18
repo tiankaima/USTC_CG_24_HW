@@ -14,8 +14,7 @@
 namespace USTC_CG
 {
 
-CompWarping::CompWarping(const std::string& label, const std::string& filename)
-    : ImageEditor(label, filename)
+CompWarping::CompWarping(const std::string& label, const std::string& filename) : ImageEditor(label, filename)
 {
     if (data_)
         back_up_ = std::make_shared<Image>(*data_);
@@ -57,8 +56,7 @@ void CompWarping::mirror(bool is_horizontal, bool is_vertical)
     if (is_horizontal && is_vertical)
         for (int i = 0; i < width; ++i)
             for (int j = 0; j < height; ++j)
-                data_->set_pixel(
-                    i, j, image_tmp.get_pixel(width - 1 - i, height - 1 - j));
+                data_->set_pixel(i, j, image_tmp.get_pixel(width - 1 - i, height - 1 - j));
 
     if (is_horizontal && !is_vertical)
         for (int i = 0; i < width; ++i)
@@ -92,11 +90,7 @@ void CompWarping::warping(WarpType type)
     if (start_points_.empty())
         return;
 
-    std::shared_ptr<Warp> warp = create_warp(
-        type,
-        ImVec2((float)data_->width(), (float)data_->height()),
-        start_points_,
-        end_points_);
+    std::shared_ptr<Warp> warp = create_warp(type, ImVec2((float)data_->width(), (float)data_->height()), start_points_, end_points_);
     warp->warmup();
 
     // Create a new image, init as black
@@ -113,13 +107,7 @@ void CompWarping::warping(WarpType type)
             0));  // using unsigned char since vector<bool> is bullshit
 
     // Ann index
-    Annoy::AnnoyIndex<
-        int,
-        float,
-        Annoy::Euclidean,
-        Annoy::Kiss64Random,
-        Annoy::AnnoyIndexSingleThreadedBuildPolicy>
-        ann(2);
+    Annoy::AnnoyIndex<int, float, Annoy::Euclidean, Annoy::Kiss64Random, Annoy::AnnoyIndexSingleThreadedBuildPolicy> ann(2);
     int ann_counts = 0;
 
     for (int y = 0; y < data_->height(); ++y)
@@ -130,8 +118,7 @@ void CompWarping::warping(WarpType type)
             auto new_y = static_cast<int>(p(1));
 
             // Copy the color from the original image to the result image
-            if (new_x >= 0 && new_x < data_->width() && new_y >= 0 &&
-                new_y < data_->height())
+            if (new_x >= 0 && new_x < data_->width() && new_y >= 0 && new_y < data_->height())
             {
                 std::vector<unsigned char> pixel = data_->get_pixel(x, y);
                 warped_image.set_pixel(new_x, new_y, pixel);
@@ -158,8 +145,7 @@ void CompWarping::warping(WarpType type)
 
                 auto pos = new float[2];
                 ann.get_item(indices[0], pos);
-                std::vector<unsigned char> pixel =
-                    warped_image.get_pixel((int)pos[0], (int)pos[1]);
+                std::vector<unsigned char> pixel = warped_image.get_pixel((int)pos[0], (int)pos[1]);
                 warped_image.set_pixel(x, y, pixel);
             }
 
@@ -180,11 +166,7 @@ void CompWarping::select_points()
     /// Invisible button over the canvas to capture mouse interactions.
     ImGui::SetCursorScreenPos(position_);
     ImGui::InvisibleButton(
-        label_.c_str(),
-        ImVec2(
-            static_cast<float>(image_width_),
-            static_cast<float>(image_height_)),
-        ImGuiButtonFlags_MouseButtonLeft);
+        label_.c_str(), ImVec2(static_cast<float>(image_width_), static_cast<float>(image_height_)), ImGuiButtonFlags_MouseButtonLeft);
     // Record the current status of the invisible button
     bool is_hovered_ = ImGui::IsItemHovered();
     // Selections
@@ -192,8 +174,7 @@ void CompWarping::select_points()
     if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
         draw_status_ = true;
-        start_ = end_ =
-            ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
+        start_ = end_ = ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
     }
     if (draw_status_)
     {
@@ -209,10 +190,8 @@ void CompWarping::select_points()
     auto draw_list = ImGui::GetWindowDrawList();
     for (size_t i = 0; i < start_points_.size(); ++i)
     {
-        ImVec2 s(
-            start_points_[i].x + position_.x, start_points_[i].y + position_.y);
-        ImVec2 e(
-            end_points_[i].x + position_.x, end_points_[i].y + position_.y);
+        ImVec2 s(start_points_[i].x + position_.x, start_points_[i].y + position_.y);
+        ImVec2 e(end_points_[i].x + position_.x, end_points_[i].y + position_.y);
         draw_list->AddLine(s, e, IM_COL32(255, 0, 0, 255), 2.0f);
         draw_list->AddCircleFilled(s, 4.0f, IM_COL32(0, 0, 255, 255));
         draw_list->AddCircleFilled(e, 4.0f, IM_COL32(0, 255, 0, 255));

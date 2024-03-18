@@ -6,8 +6,7 @@
 
 namespace USTC_CG
 {
-WindowPoisson::WindowPoisson(const std::string& window_name)
-    : Window(window_name)
+WindowPoisson::WindowPoisson(const std::string& window_name) : Window(window_name)
 {
 }
 
@@ -89,6 +88,14 @@ void WindowPoisson::draw_toolbar()
             "clone the selected region to the target image.");
         // HW3_TODO: You may add more items in the menu for the different types
         // of Poisson editing.
+        if (ImGui::MenuItem("Seamless") && p_target_ && p_source_)
+        {
+            p_target_->set_seamless();
+        }
+        add_tooltips(
+            "Press this button and then click in the target image, to "
+            "clone the selected region to the target image with seamless "
+            "cloning.");
 
         ImGui::EndMainMenuBar();
     }
@@ -103,9 +110,7 @@ void WindowPoisson::draw_target()
         // Place the image in the center of the window
         const auto& min = ImGui::GetCursorScreenPos();
         const auto& size = ImGui::GetContentRegionAvail();
-        ImVec2 pos = ImVec2(
-            min.x + size.x / 2 - image_size.x / 2,
-            min.y + size.y / 2 - image_size.y / 2);
+        ImVec2 pos = ImVec2(min.x + size.x / 2 - image_size.x / 2, min.y + size.y / 2 - image_size.y / 2);
         p_target_->set_position(pos);
         p_target_->draw();
     }
@@ -121,9 +126,7 @@ void WindowPoisson::draw_source()
         // Place the image in the center of the window
         const auto& min = ImGui::GetCursorScreenPos();
         const auto& size = ImGui::GetContentRegionAvail();
-        ImVec2 pos = ImVec2(
-            min.x + size.x / 2 - image_size.x / 2,
-            min.y + size.y / 2 - image_size.y / 2);
+        ImVec2 pos = ImVec2(min.x + size.x / 2 - image_size.x / 2, min.y + size.y / 2 - image_size.y / 2);
         p_source_->set_position(pos);
         p_source_->draw();
     }
@@ -135,17 +138,14 @@ void WindowPoisson::draw_open_target_image_file_dialog()
     IGFD::FileDialogConfig config;
     config.path = DATA_PATH;
     config.flags = ImGuiFileDialogFlags_Modal;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseTargetOpenFileDlg", "Choose Image File", ".jpg,.png", config);
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseTargetOpenFileDlg", "Choose Image File", ".jpg,.png", config);
     ImVec2 main_size = ImGui::GetMainViewport()->WorkSize;
     ImVec2 dlg_size(main_size.x / 2, main_size.y / 2);
-    if (ImGuiFileDialog::Instance()->Display(
-            "ChooseTargetOpenFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
+    if (ImGuiFileDialog::Instance()->Display("ChooseTargetOpenFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string filePathName =
-                ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
             std::string label = filePathName;
             p_target_ = std::make_shared<CompTargetImage>(label, filePathName);
             if (p_source_)
@@ -161,17 +161,14 @@ void WindowPoisson::draw_open_source_image_file_dialog()
     IGFD::FileDialogConfig config;
     config.path = DATA_PATH;
     config.flags = ImGuiFileDialogFlags_Modal;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseSourceOpenFileDlg", "Choose Image File", ".jpg,.png", config);
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseSourceOpenFileDlg", "Choose Image File", ".jpg,.png", config);
     ImVec2 main_size = ImGui::GetMainViewport()->WorkSize;
     ImVec2 dlg_size(main_size.x / 2, main_size.y / 2);
-    if (ImGuiFileDialog::Instance()->Display(
-            "ChooseSourceOpenFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
+    if (ImGuiFileDialog::Instance()->Display("ChooseSourceOpenFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string filePathName =
-                ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
             std::string label = filePathName;
             p_source_ = std::make_shared<CompSourceImage>(label, filePathName);
             // Bind the source image to the target
@@ -188,17 +185,14 @@ void WindowPoisson::draw_save_image_file_dialog()
     IGFD::FileDialogConfig config;
     config.path = DATA_PATH;
     config.flags = ImGuiFileDialogFlags_Modal;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseImageSaveFileDlg", "Save Image As...", ".jpg", config);
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseImageSaveFileDlg", "Save Image As...", ".jpg", config);
     ImVec2 main_size = ImGui::GetMainViewport()->WorkSize;
     ImVec2 dlg_size(main_size.x / 2, main_size.y / 2);
-    if (ImGuiFileDialog::Instance()->Display(
-            "ChooseImageSaveFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
+    if (ImGuiFileDialog::Instance()->Display("ChooseImageSaveFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string filePathName =
-                ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
             if (p_target_)
                 p_target_->save_to_disk(filePathName);
         }

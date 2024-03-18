@@ -40,10 +40,7 @@ class Canvas : public Component
 
     [[nodiscard]] static constexpr std::vector<ShapeType> all_types()
     {
-        return {
-            ShapeType::kDefault, ShapeType::kLine,    ShapeType::kRect,
-            ShapeType::kEllipse, ShapeType::kPolygon, ShapeType::kFreehand
-        };
+        return { ShapeType::kDefault, ShapeType::kLine, ShapeType::kRect, ShapeType::kEllipse, ShapeType::kPolygon, ShapeType::kFreehand };
     }
 
     [[nodiscard]] static constexpr std::string name(const ShapeType& type)
@@ -60,9 +57,7 @@ class Canvas : public Component
         }
     }
 
-    [[nodiscard]] static std::shared_ptr<Shape> create_shape(
-        const ShapeType& type,
-        ImVec2 point)
+    [[nodiscard]] static std::shared_ptr<Shape> create_shape(const ShapeType& type, ImVec2 point)
     {
         switch (type)
         {
@@ -72,8 +67,7 @@ class Canvas : public Component
                 return std::make_shared<Line>(point, point);
             case ShapeType::kRect:  //
                 return std::make_shared<Rect>(point, point);
-            case ShapeType::kEllipse:
-                return std::make_shared<Ellipse>(point, point);
+            case ShapeType::kEllipse: return std::make_shared<Ellipse>(point, point);
             case ShapeType::kPolygon:  //
                 return std::make_shared<Polygon>(point);
             case ShapeType::kFreehand:  //

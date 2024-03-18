@@ -16,9 +16,7 @@ class CompTargetImage : public ImageEditor
         kSeamless = 2
     };
 
-    explicit CompTargetImage(
-        const std::string& label,
-        const std::string& filename);
+    explicit CompTargetImage(const std::string& label, const std::string& filename);
     ~CompTargetImage() noexcept override = default;
 
     void draw() override;

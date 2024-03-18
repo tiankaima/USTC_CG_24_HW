@@ -71,14 +71,12 @@ inline ImVec2 operator/(const ImVec2& lhs, double rhs)
 
 inline ImVec2 from_theta(double theta, double r = 1)
 {
-    return { static_cast<float>(r * cos(theta)),
-             static_cast<float>(r * sin(theta)) };
+    return { static_cast<float>(r * cos(theta)), static_cast<float>(r * sin(theta)) };
 }
 
 inline auto distance(const ImVec2& lhs, const ImVec2& rhs)
 {
-    return std::sqrt(
-        (lhs.x - rhs.x) * (lhs.x - rhs.x) + (lhs.y - rhs.y) * (lhs.y - rhs.y));
+    return std::sqrt((lhs.x - rhs.x) * (lhs.x - rhs.x) + (lhs.y - rhs.y) * (lhs.y - rhs.y));
 }
 
 /**

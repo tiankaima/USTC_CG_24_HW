@@ -20,10 +20,7 @@ void MiniDraw::draw_canvas()
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    if (ImGui::Begin(
-            "Canvas",
-            &flag_show_canvas_view_,
-            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
+    if (ImGui::Begin("Canvas", &flag_show_canvas_view_, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
     {
         for (const auto type : Canvas::all_types())
         {

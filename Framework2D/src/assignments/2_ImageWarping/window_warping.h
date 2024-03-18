@@ -10,8 +10,7 @@ namespace USTC_CG
 class ImageWarping : public Window
 {
    public:
-    explicit ImageWarping(const std::string& window_name)
-        : Window(window_name){};
+    explicit ImageWarping(const std::string& window_name) : Window(window_name){};
     ~ImageWarping() override = default;
 
     void draw() override;

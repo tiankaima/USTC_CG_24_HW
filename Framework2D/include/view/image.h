@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Eigen/Core>
+#include <iostream>
 #include <memory>     // For std::unique_ptr
 #include <stdexcept>  // For exceptions
 #include <vector>
@@ -16,17 +18,12 @@ class Image
         : width_(width),
           height_(height),
           channels_(channels),
-          image_data_(
-              std::make_unique<unsigned char[]>(width * height * channels))
+          image_data_(std::make_unique<unsigned char[]>(width * height * channels))
     {
     }
 
     // Constructor with width, height, channels, and external data
-    Image(
-        int width,
-        int height,
-        int channels,
-        std::unique_ptr<unsigned char[]> image_data)
+    Image(int width, int height, int channels, std::unique_ptr<unsigned char[]> image_data)
         : width_(width),
           height_(height),
           channels_(channels),
@@ -35,11 +32,7 @@ class Image
     }
 
     // Method to initialize or reinitialize from external data
-    void initialize(
-        int width,
-        int height,
-        int channels,
-        std::unique_ptr<unsigned char[]> image_data)
+    void initialize(int width, int height, int channels, std::unique_ptr<unsigned char[]> image_data)
     {
         width_ = width;
         height_ = height;
@@ -51,13 +44,9 @@ class Image
         : width_(other.width_),
           height_(other.height_),
           channels_(other.channels_),
-          image_data_(std::make_unique<unsigned char[]>(
-              other.width_ * other.height_ * other.channels_))
+          image_data_(std::make_unique<unsigned char[]>(other.width_ * other.height_ * other.channels_))
     {
-        std::copy(
-            other.image_data_.get(),
-            other.image_data_.get() + width_ * height_ * channels_,
-            image_data_.get());
+        std::copy(other.image_data_.get(), other.image_data_.get() + width_ * height_ * channels_, image_data_.get());
     }
 
     Image& operator=(const Image& other)
@@ -67,12 +56,8 @@ class Image
             width_ = other.width_;
             height_ = other.height_;
             channels_ = other.channels_;
-            image_data_ =
-                std::make_unique<unsigned char[]>(width_ * height_ * channels_);
-            std::copy(
-                other.image_data_.get(),
-                other.image_data_.get() + width_ * height_ * channels_,
-                image_data_.get());
+            image_data_ = std::make_unique<unsigned char[]>(width_ * height_ * channels_);
+            std::copy(other.image_data_.get(), other.image_data_.get() + width_ * height_ * channels_, image_data_.get());
         }
         return *this;
     }
@@ -105,12 +90,11 @@ class Image
     {
         if (x < 0 || x >= width_ || y < 0 || y >= height_)
         {
-            throw std::out_of_range("Pixel coordinates out of bounds");
+            std::cerr << "[GET] Pixel coordinates out of bounds" << std::endl;
+            return std::vector<unsigned char>(channels_);
         }
         std::vector<unsigned char> pixelValues(channels_);
-        std::size_t index =
-            static_cast<std::size_t>(y) * static_cast<std::size_t>(width_) +
-            static_cast<std::size_t>(x);
+        std::size_t index = static_cast<std::size_t>(y) * static_cast<std::size_t>(width_) + static_cast<std::size_t>(x);
         index *= static_cast<std::size_t>(channels_);
         for (int channel = 0; channel < channels_; ++channel)
         {
@@ -123,7 +107,8 @@ class Image
     {
         if (x < 0 || x >= width_ || y < 0 || y >= height_)
         {
-            throw std::out_of_range("Pixel coordinates out of bounds");
+            std::cerr << "[SET] Pixel coordinates out of bounds" << std::endl;
+            return;
         }
         // Allow 3 channel input when channels.size()==4 (RGB -> RGBA)
         size_t channels_reset = channels_;
@@ -131,17 +116,24 @@ class Image
             channels_reset = 3;
         else if (values.size() != static_cast<size_t>(channels_))
         {
-            throw std::invalid_argument(
-                "Number of values does not match the number of channels");
+            std::cerr << "Number of values does not match the number of channels" << std::endl;
+            return;
         }
-        std::size_t index =
-            static_cast<std::size_t>(y) * static_cast<std::size_t>(width_) +
-            static_cast<std::size_t>(x);
+        std::size_t index = static_cast<std::size_t>(y) * static_cast<std::size_t>(width_) + static_cast<std::size_t>(x);
         index *= static_cast<std::size_t>(channels_);
         for (int channel = 0; channel < channels_reset; ++channel)
         {
             image_data_[index + channel] = values[channel];
         }
+    }
+
+    Eigen::MatrixXi as_eigen_mask()
+    {
+        Eigen::MatrixXi mask(width_ - 2, height_ - 2);
+        for (int i = 0; i < width_ - 2; i++)
+            for (int j = 0; j < height_ - 2; j++)
+                mask(i, j) = (get_pixel(i + 1, j + 1)[0] > 0) ? 1 : 0;
+        return mask;
     }
 
    private:

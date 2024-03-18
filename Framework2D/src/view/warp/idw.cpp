@@ -36,23 +36,15 @@ void IDW::warmup()
             if (i == j)
                 continue;
 
-            auto sigma =
-                std::pow((control_points_[i] - control_points_[j]).norm(), -2);
+            auto sigma = std::pow((control_points_[i] - control_points_[j]).norm(), -2);
             for (const auto m : { 0, 1 })
                 for (const auto n : { 0, 1 })
-                    co(m, n) +=
-                        (float)sigma *
-                        (control_points_[j](m) - control_points_[i](m)) *
-                        (control_points_[j](n) - control_points_[i](n));
+                    co(m, n) += (float)sigma * (control_points_[j](m) - control_points_[i](m)) * (control_points_[j](n) - control_points_[i](n));
 
             for (const auto m : { 0, 1 })
             {
-                b_1(m) += (float)sigma *
-                          (control_points_[j](m) - control_points_[i](m)) *
-                          (target_points_[j](0) - target_points_[i](0));
-                b_2(m) += (float)sigma *
-                          (control_points_[j](m) - control_points_[i](m)) *
-                          (target_points_[j](1) - target_points_[i](1));
+                b_1(m) += (float)sigma * (control_points_[j](m) - control_points_[i](m)) * (target_points_[j](0) - target_points_[i](0));
+                b_2(m) += (float)sigma * (control_points_[j](m) - control_points_[i](m)) * (target_points_[j](1) - target_points_[i](1));
             }
         }
 

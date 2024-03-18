@@ -10,8 +10,8 @@
 #include <vector>
 
 #include "imgui.h"
-#include "view/image.h"
 #include "view/component.h"
+#include "view/image.h"
 
 namespace USTC_CG
 {
@@ -45,11 +45,11 @@ class ImageEditor : public Component
     void load_gltexture() const;
 
    protected:
-    std::string filename_;                 // Path to the image file.
-    std::shared_ptr<Image> data_;          // Raw pixel data of the image.
-    GLuint tex_id_ = 0;                    // OpenGL texture identifier.
+    std::string filename_;         // Path to the image file.
+    std::shared_ptr<Image> data_;  // Raw pixel data of the image.
+    GLuint tex_id_ = 0;            // OpenGL texture identifier.
 
-    ImVec2 position_ = ImVec2(0.0f, 0.0f);  // Position of the image in the GUI.
+    ImVec2 position_ = ImVec2(0.0f, 0.0f);    // Position of the image in the GUI.
     int image_width_ = 0, image_height_ = 0;  // Dimensions of the loaded image.
 };
 

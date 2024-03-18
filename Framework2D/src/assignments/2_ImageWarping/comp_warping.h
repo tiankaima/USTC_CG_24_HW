@@ -27,10 +27,7 @@ class CompWarping : public ImageEditor
 
     static constexpr std::vector<WarpType> all_types()
     {
-        return { WarpType::kDefault,
-                 WarpType::kIDW,
-                 WarpType::kRBF,
-                 WarpType::kFishEye };
+        return { WarpType::kDefault, WarpType::kIDW, WarpType::kRBF, WarpType::kFishEye };
     }
 
     static constexpr std::string name(const WarpType& type)
@@ -45,11 +42,8 @@ class CompWarping : public ImageEditor
         }
     }
 
-    static std::shared_ptr<Warp> create_warp(
-        WarpType type,
-        const ImVec2& size,
-        const std::vector<ImVec2>& start_points,
-        const std::vector<ImVec2>& end_points)
+    static std::shared_ptr<Warp>
+    create_warp(WarpType type, const ImVec2& size, const std::vector<ImVec2>& start_points, const std::vector<ImVec2>& end_points)
     {
         switch (type)
         {
@@ -60,8 +54,7 @@ class CompWarping : public ImageEditor
             case WarpType::kRBF:  //
                 return std::make_shared<RBF>(size, start_points, end_points);
             case WarpType::kFishEye:  //
-                return std::make_shared<FishEye>(
-                    size, start_points, end_points);
+                return std::make_shared<FishEye>(size, start_points, end_points);
             default:  //
                 return nullptr;
         }

@@ -26,10 +26,8 @@ void Rect::update(ImVec2 point)
         auto height = std::abs(point.y - start_point_.y);
         auto min = std::min(width, height);
         end_point_ = ImVec2(
-            (point.x > start_point_.x) ? start_point_.x + min
-                                      : start_point_.x - min,
-            (point.y > start_point_.y) ? start_point_.y + min
-                                      : start_point_.y - min);
+            (point.x > start_point_.x) ? start_point_.x + min : start_point_.x - min,
+            (point.y > start_point_.y) ? start_point_.y + min : start_point_.y - min);
         return;
     }
 

@@ -21,10 +21,7 @@ void Demo::draw()
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    if (ImGui::Begin(
-            "Demo",
-            &flag_show_main_view_,
-            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
+    if (ImGui::Begin("Demo", &flag_show_main_view_, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground))
     {
         if (p_image_)
             draw_image();
@@ -60,9 +57,7 @@ void Demo::draw_image()
     const auto& canvas_size = ImGui::GetContentRegionAvail();
     const auto& image_size = p_image_->get_image_size();
     // Center the image in the window
-    ImVec2 pos = ImVec2(
-        canvas_min.x + canvas_size.x / 2 - image_size.x / 2,
-        canvas_min.y + canvas_size.y / 2 - image_size.y / 2);
+    ImVec2 pos = ImVec2(canvas_min.x + canvas_size.x / 2 - image_size.x / 2, canvas_min.y + canvas_size.y / 2 - image_size.y / 2);
     p_image_->set_position(pos);
     p_image_->draw();
 }
@@ -70,14 +65,12 @@ void Demo::draw_open_image_file_dialog()
 {
     IGFD::FileDialogConfig config;
     config.path = ".";
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseImageOpenFileDlg", "Choose Image File", ".png,.jpg", config);
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseImageOpenFileDlg", "Choose Image File", ".png,.jpg", config);
     if (ImGuiFileDialog::Instance()->Display("ChooseImageOpenFileDlg"))
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string filePathName =
-                ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
             std::string label = filePathName;
             p_image_ = std::make_shared<ImageEditor>(label, filePathName);
             p_canvas_->clear();
@@ -95,9 +88,7 @@ void Demo::draw_canvas()
     {
         // Resize the canvas to fit the image
         const auto& image_size = p_image_->get_image_size();
-        ImVec2 pos = ImVec2(
-            canvas_min.x + canvas_size.x / 2 - image_size.x / 2,
-            canvas_min.y + canvas_size.y / 2 - image_size.y / 2);
+        ImVec2 pos = ImVec2(canvas_min.x + canvas_size.x / 2 - image_size.x / 2, canvas_min.y + canvas_size.y / 2 - image_size.y / 2);
         p_canvas_->set_attributes(pos, image_size);
         p_canvas_->show_background(false);
     }

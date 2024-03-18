@@ -9,9 +9,7 @@ class Line : public Shape
    public:
     Line() = default;
 
-    Line(ImVec2 start_point, ImVec2 end_point)
-        : start_point_(start_point),
-          end_point_(end_point)
+    Line(ImVec2 start_point, ImVec2 end_point) : start_point_(start_point), end_point_(end_point)
     {
     }
 

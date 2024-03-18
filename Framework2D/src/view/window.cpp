@@ -15,8 +15,7 @@ Window::Window(const std::string& window_name) : name_(window_name)
         throw std::runtime_error("Failed to initialize GLFW!");
     }
 
-    window_ =
-        glfwCreateWindow(width_, height_, name_.c_str(), nullptr, nullptr);
+    window_ = glfwCreateWindow(width_, height_, name_.c_str(), nullptr, nullptr);
     if (window_ == nullptr)
     {
         glfwTerminate();  // Ensure GLFW is cleaned up before throwing
@@ -53,8 +52,7 @@ void Window::run()
 
     while (!glfwWindowShouldClose(window_))
     {
-        if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE) ||
-            glfwGetWindowAttrib(window_, GLFW_ICONIFIED))
+        if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE) || glfwGetWindowAttrib(window_, GLFW_ICONIFIED))
             glfwWaitEvents();
         else
         {
@@ -73,9 +71,7 @@ void Window::draw()
 
 bool Window::init_glfw()
 {
-    glfwSetErrorCallback(
-        [](int error, const char* desc)
-        { fprintf(stderr, "GLFW Error %d: %s\n", error, desc); });
+    glfwSetErrorCallback([](int error, const char* desc) { fprintf(stderr, "GLFW Error %d: %s\n", error, desc); });
 
     if (!glfwInit())
     {
@@ -121,7 +117,6 @@ bool Window::init_gui()
 #else
     ImGui_ImplOpenGL3_Init("#version 130");
 #endif
-    
 
     return true;
 }

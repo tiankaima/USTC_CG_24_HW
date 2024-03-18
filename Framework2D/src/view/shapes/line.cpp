@@ -9,11 +9,7 @@ void Line::draw(const Config& config) const
 {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-    draw_list->AddLine(
-        config.bias + start_point_,
-        config.bias + end_point_,
-        config.line_color,
-        config.line_thickness);
+    draw_list->AddLine(config.bias + start_point_, config.bias + end_point_, config.line_color, config.line_thickness);
 }
 
 void Line::update(ImVec2 point)

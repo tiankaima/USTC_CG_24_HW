@@ -1,19 +1,14 @@
 #include "comp_source_image.h"
 
 #include <algorithm>
-#include <cmath>
 
 namespace USTC_CG
 {
 
-CompSourceImage::CompSourceImage(
-    const std::string& label,
-    const std::string& filename)
-    : ImageEditor(label, filename)
+CompSourceImage::CompSourceImage(const std::string& label, const std::string& filename) : ImageEditor(label, filename)
 {
     if (data_)
-        selected_region_ =
-            std::make_shared<Image>(data_->width(), data_->height(), 1);
+        selected_region_ = std::make_shared<Image>(data_->width(), data_->height(), 1);
 }
 
 void CompSourceImage::draw()
@@ -35,11 +30,7 @@ void CompSourceImage::select_region()
     /// Invisible button over the canvas to capture mouse interactions.
     ImGui::SetCursorScreenPos(position_);
     ImGui::InvisibleButton(
-        label_.c_str(),
-        ImVec2(
-            static_cast<float>(image_width_),
-            static_cast<float>(image_height_)),
-        ImGuiButtonFlags_MouseButtonLeft);
+        label_.c_str(), ImVec2(static_cast<float>(image_width_), static_cast<float>(image_height_)), ImGuiButtonFlags_MouseButtonLeft);
     // Record the current status of the invisible button
     bool is_hovered_ = ImGui::IsItemHovered();
     // HW3_TODO(optional): You can add more shapes for region selection. You can
@@ -50,18 +41,14 @@ void CompSourceImage::select_region()
     {
         draw_status_ = true;
         start_ = end_ = ImVec2(
-            std::clamp<float>(
-                io.MousePos.x - position_.x, 0, (float)image_width_),
-            std::clamp<float>(
-                io.MousePos.y - position_.y, 0, (float)image_height_));
+            std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
+            std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_));
     }
     if (draw_status_)
     {
         end_ = ImVec2(
-            std::clamp<float>(
-                io.MousePos.x - position_.x, 0, (float)image_width_),
-            std::clamp<float>(
-                io.MousePos.y - position_.y, 0, (float)image_height_));
+            std::clamp<float>(io.MousePos.x - position_.x, 0, (float)image_width_),
+            std::clamp<float>(io.MousePos.y - position_.y, 0, (float)image_height_));
         if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
             draw_status_ = false;
@@ -78,16 +65,15 @@ void CompSourceImage::select_region()
                     selected_region_->set_pixel(i, j, { 0 });
             switch (region_type_)
             {
-                case CompSourceImage::kDefault: break;
-                case CompSourceImage::kRect:
+                case CompSourceImage::RegionType::kDefault:
                 {
-                    for (int i = static_cast<int>(start_.x);
-                         i < static_cast<int>(end_.x);
-                         ++i)
+                    break;
+                }
+                case CompSourceImage::RegionType::kRect:
+                {
+                    for (int i = static_cast<int>(start_.x); i < static_cast<int>(end_.x); ++i)
                     {
-                        for (int j = static_cast<int>(start_.y);
-                             j < static_cast<int>(end_.y);
-                             ++j)
+                        for (int j = static_cast<int>(start_.y); j < static_cast<int>(end_.y); ++j)
                         {
                             selected_region_->set_pixel(i, j, { 255 });
                         }
@@ -96,6 +82,11 @@ void CompSourceImage::select_region()
                 }
                 default: break;
             }
+
+            Eigen::MatrixXi mask_eigen = selected_region_->as_eigen_mask();
+            poisson_ = std::make_shared<Poisson>();
+            poisson_->set_inside_mask(mask_eigen);
+            poisson_->PoissonInit(*data_);
         }
     }
 
@@ -106,8 +97,11 @@ void CompSourceImage::select_region()
 
     switch (region_type_)
     {
-        case CompSourceImage::kDefault: break;
-        case CompSourceImage::kRect:
+        case CompSourceImage::RegionType::kDefault:
+        {
+            break;
+        }
+        case CompSourceImage::RegionType::kRect:
         {
             if (e.x > s.x && e.y > s.y)
                 draw_list->AddRect(s, e, IM_COL32(255, 0, 0, 255), 2.0f);
@@ -127,5 +121,9 @@ std::shared_ptr<Image> CompSourceImage::get_data()
 ImVec2 CompSourceImage::get_position() const
 {
     return start_;
+}
+std::shared_ptr<Poisson> CompSourceImage::get_poisson() const
+{
+    return poisson_;
 }
 }  // namespace USTC_CG

@@ -1,15 +1,13 @@
 #include "comp_target_image.h"
 
 #include <cmath>
+#include <iostream>
 #include <utility>
 
 namespace USTC_CG
 {
 
-CompTargetImage::CompTargetImage(
-    const std::string& label,
-    const std::string& filename)
-    : ImageEditor(label, filename)
+CompTargetImage::CompTargetImage(const std::string& label, const std::string& filename) : ImageEditor(label, filename)
 {
     if (data_)
         back_up_ = std::make_shared<Image>(*data_);
@@ -22,11 +20,7 @@ void CompTargetImage::draw()
     // Invisible button for interactions
     ImGui::SetCursorScreenPos(position_);
     ImGui::InvisibleButton(
-        label_.c_str(),
-        ImVec2(
-            static_cast<float>(image_width_),
-            static_cast<float>(image_height_)),
-        ImGuiButtonFlags_MouseButtonLeft);
+        label_.c_str(), ImVec2(static_cast<float>(image_width_), static_cast<float>(image_height_)), ImGuiButtonFlags_MouseButtonLeft);
     bool is_hovered_ = ImGui::IsItemHovered();
     // When the mouse is clicked or moving, we would adapt clone function to
     // copy the selected region to the target.
@@ -34,14 +28,12 @@ void CompTargetImage::draw()
     if (is_hovered_ && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
         edit_status_ = true;
-        mouse_position_ =
-            ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
+        mouse_position_ = ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
         clone();
     }
     if (edit_status_)
     {
-        mouse_position_ =
-            ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
+        mouse_position_ = ImVec2(io.MousePos.x - position_.x, io.MousePos.y - position_.y);
         if (flag_realtime_updating)
             clone();
         if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
@@ -87,8 +79,7 @@ void CompTargetImage::clone()
     // when the checkbox is selected. It is required to improve the efficiency
     // of your seamless cloning to achieve realtime editing. (Use decomposition
     // of sparse matrix before solve the linear system)
-    if (data_ == nullptr || source_image_ == nullptr ||
-        source_image_->get_region() == nullptr)
+    if (data_ == nullptr || source_image_ == nullptr || source_image_->get_region() == nullptr)
         return;
     std::shared_ptr<Image> mask = source_image_->get_region();
 
@@ -98,62 +89,29 @@ void CompTargetImage::clone()
         case CompTargetImage::CloneType::kPaste:
         {
             restore();
-
-            for (int i = 0; i < mask->width(); ++i)
-            {
-                for (int j = 0; j < mask->height(); ++j)
-                {
-                    int tar_x =
-                        static_cast<int>(mouse_position_.x) + i -
-                        static_cast<int>(source_image_->get_position().x);
-                    int tar_y =
-                        static_cast<int>(mouse_position_.y) + j -
-                        static_cast<int>(source_image_->get_position().y);
-                    if (0 <= tar_x && tar_x < image_width_ && 0 <= tar_y &&
-                        tar_y < image_height_ && mask->get_pixel(i, j)[0] > 0)
-                    {
-                        data_->set_pixel(
-                            tar_x,
-                            tar_y,
-                            source_image_->get_data()->get_pixel(i, j));
-                    }
-                }
-            }
+            source_image_->get_poisson()->CopyPaste(
+                { (int)(mouse_position_.x - source_image_->get_position().x), (int)(mouse_position_.y - source_image_->get_position().y) },
+                { 0, 0 },
+                *data_,
+                *source_image_->get_data());
             break;
         }
         case CompTargetImage::CloneType::kSeamless:
         {
-            // You should delete this block and implement your own seamless
-            // cloning. For each pixel in the selected region, calculate the
-            // final RGB color by solving Poisson Equations.
             restore();
-
-            for (int i = 0; i < mask->width(); ++i)
-            {
-                for (int j = 0; j < mask->height(); ++j)
-                {
-                    int tar_x =
-                        static_cast<int>(mouse_position_.x) + i -
-                        static_cast<int>(source_image_->get_position().x);
-                    int tar_y =
-                        static_cast<int>(mouse_position_.y) + j -
-                        static_cast<int>(source_image_->get_position().y);
-                    if (0 <= tar_x && tar_x < image_width_ && 0 <= tar_y &&
-                        tar_y < image_height_ && mask->get_pixel(i, j)[0] > 0)
-                    {
-                        data_->set_pixel(
-                            tar_x,
-                            tar_y,
-                            source_image_->get_data()->get_pixel(i, j));
-                    }
-                }
-            }
-
+            source_image_->get_poisson()->GetPoisson(
+                { (int)(mouse_position_.x - source_image_->get_position().x), (int)(mouse_position_.y - source_image_->get_position().y) },
+                { 0, 0 },
+                *data_,
+                *source_image_->get_data());
             break;
         }
-        default: break;
+        default:
+        {
+            break;
+        }
     }
 
     update();
 }
-} // namespace USTC_CG
+}  // namespace USTC_CG

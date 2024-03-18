@@ -11,11 +11,7 @@ void Freehand::draw(const Config& config) const
 
     for (size_t i = 0; i < points_.size() - 1; i++)
     {
-        draw_list->AddLine(
-            points_[i] + config.bias,
-            points_[i + 1] + config.bias,
-            config.line_color,
-            config.line_thickness);
+        draw_list->AddLine(points_[i] + config.bias, points_[i + 1] + config.bias, config.line_color, config.line_thickness);
     }
 }
 

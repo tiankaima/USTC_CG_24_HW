@@ -22,8 +22,7 @@ void RBF::warmup()
                 if (i == j)
                     continue;
 
-                float distance =
-                    (control_points_[i] - control_points_[j]).norm();
+                float distance = (control_points_[i] - control_points_[j]).norm();
                 if (distance < min)
                     min = distance;
             }
@@ -52,8 +51,7 @@ void RBF::warmup()
         for (auto j = 0; j < n; j++)
         {
             float distance = (control_points_[i] - control_points_[j]).norm();
-            co(i, j) = std::sqrt(
-                distance * distance + min_radius_[i] * min_radius_[i]);
+            co(i, j) = std::sqrt(distance * distance + min_radius_[i] * min_radius_[i]);
         }
         diff_x(i) = target_points_[i].x() - control_points_[i].x();
         diff_y(i) = target_points_[i].y() - control_points_[i].y();
@@ -82,12 +80,8 @@ Eigen::Vector2f RBF::warp(const Eigen::Vector2f& point)
     {
         const auto& cp = control_points_[i];
         const float distance = (cp - point).norm();
-        result.x() +=
-            alpha_x_list_[i] *
-            std::sqrt(distance * distance + min_radius_[i] * min_radius_[i]);
-        result.y() +=
-            alpha_y_list_[i] *
-            std::sqrt(distance * distance + min_radius_[i] * min_radius_[i]);
+        result.x() += alpha_x_list_[i] * std::sqrt(distance * distance + min_radius_[i] * min_radius_[i]);
+        result.y() += alpha_y_list_[i] * std::sqrt(distance * distance + min_radius_[i] * min_radius_[i]);
     }
     result.x() += point.x();
     result.y() += point.y();

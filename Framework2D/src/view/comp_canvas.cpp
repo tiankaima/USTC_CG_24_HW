@@ -22,14 +22,12 @@ void Canvas::draw()
     }
 
     // ctrl z:
-    if (ImGui::GetIO().KeyCtrl &&
-        ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Z)))
+    if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Z)))
     {
         undo();
     }
     // ctrl y:
-    if (ImGui::GetIO().KeyCtrl &&
-        ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Y)))
+    if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Y)))
     {
         redo();
     }
@@ -83,9 +81,7 @@ void Canvas::redo()
     else if (history_actions[history_index].action == Action::kDelete)
     {
         // shape_list_.pop_back();
-        shape_list_.erase(
-            shape_list_.begin() +
-            static_cast<int>(history_actions[history_index].delete_index));
+        shape_list_.erase(shape_list_.begin() + static_cast<int>(history_actions[history_index].delete_index));
     }
 }
 
@@ -93,14 +89,11 @@ void Canvas::clear()
 {
     if (history_index != -1 && history_index != history_actions.size() - 1)
     {
-        history_actions.erase(
-            history_actions.begin() + static_cast<int>(history_index) + 1,
-            history_actions.end());
+        history_actions.erase(history_actions.begin() + static_cast<int>(history_index) + 1, history_actions.end());
     }
     for (auto index = shape_list_.size(); index > 0; index--)
     {
-        history_actions.push_back(
-            { Action::kDelete, shape_list_[index - 1], index - 1 });
+        history_actions.push_back({ Action::kDelete, shape_list_[index - 1], index - 1 });
         history_index++;
     }
 
@@ -112,8 +105,7 @@ void Canvas::set_attributes(const ImVec2& min, const ImVec2& size)
     canvas_min_ = min;
     canvas_size_ = size;
     canvas_minimal_size_ = size;
-    canvas_max_ =
-        ImVec2(canvas_min_.x + canvas_size_.x, canvas_min_.y + canvas_size_.y);
+    canvas_max_ = ImVec2(canvas_min_.x + canvas_size_.x, canvas_min_.y + canvas_size_.y);
 }
 
 void Canvas::show_background(bool flag)
@@ -133,8 +125,7 @@ void Canvas::draw_background()
     }
     /// Invisible button over the canvas to capture mouse interactions.
     ImGui::SetCursorScreenPos(canvas_min_);
-    ImGui::InvisibleButton(
-        label_.c_str(), canvas_size_, ImGuiButtonFlags_MouseButtonLeft);
+    ImGui::InvisibleButton(label_.c_str(), canvas_size_, ImGuiButtonFlags_MouseButtonLeft);
     // Record the current status of the invisible button
     is_hovered_ = ImGui::IsItemHovered();
     is_active_ = ImGui::IsItemActive();
@@ -167,9 +158,7 @@ void Canvas::finish_drawing()
         shape_list_.push_back(current_shape_);
         if (history_index != -1 && history_index != history_actions.size() - 1)
         {
-            history_actions.erase(
-                history_actions.begin() + static_cast<int>(history_index) + 1,
-                history_actions.end());
+            history_actions.erase(history_actions.begin() + static_cast<int>(history_index) + 1, history_actions.end());
         }
         history_actions.push_back({ Action::kDraw, current_shape_ });
         history_index++;
@@ -189,8 +178,7 @@ void Canvas::mouse_click_event()
     {
         if (shape_type_ == ShapeType::kPolygon)
         {
-            std::dynamic_pointer_cast<Polygon>(current_shape_)
-                ->addPoint(mouse_pos_in_canvas());
+            std::dynamic_pointer_cast<Polygon>(current_shape_)->addPoint(mouse_pos_in_canvas());
             return;
         }
 
@@ -217,8 +205,7 @@ void Canvas::mouse_release_event()
 ImVec2 Canvas::mouse_pos_in_canvas() const
 {
     ImGuiIO& io = ImGui::GetIO();
-    const ImVec2 mouse_pos_in_canvas(
-        io.MousePos.x - canvas_min_.x, io.MousePos.y - canvas_min_.y);
+    const ImVec2 mouse_pos_in_canvas(io.MousePos.x - canvas_min_.x, io.MousePos.y - canvas_min_.y);
     return mouse_pos_in_canvas;
 }
 }  // namespace USTC_CG

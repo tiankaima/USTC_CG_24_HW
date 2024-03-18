@@ -22,8 +22,7 @@ void ImageWarping::draw()
     if (ImGui::Begin(
             "ImageEditor",
             &flag_show_main_view_,
-            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground |
-                ImGuiWindowFlags_NoBringToFrontOnFocus))
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus))
     {
         if (p_image_)
             draw_image();
@@ -65,7 +64,7 @@ void ImageWarping::draw_toolbar()
             p_image_->init_selections();
             p_image_->enable_selecting(true);
         }
-        for(auto type : CompWarping::all_types())
+        for (auto type : CompWarping::all_types())
         {
             if (ImGui::MenuItem(CompWarping::name(type).c_str()) && p_image_)
             {
@@ -97,17 +96,14 @@ void ImageWarping::draw_open_image_file_dialog()
     IGFD::FileDialogConfig config;
     config.path = DATA_PATH;
     config.flags = ImGuiFileDialogFlags_Modal;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseImageOpenFileDlg", "Choose Image File", ".png,.jpg", config);
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseImageOpenFileDlg", "Choose Image File", ".png,.jpg", config);
     ImVec2 main_size = ImGui::GetMainViewport()->WorkSize;
     ImVec2 dlg_size(main_size.x / 2, main_size.y / 2);
-    if (ImGuiFileDialog::Instance()->Display(
-            "ChooseImageOpenFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
+    if (ImGuiFileDialog::Instance()->Display("ChooseImageOpenFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string filePathName =
-                ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
             std::string label = filePathName;
             p_image_ = std::make_shared<CompWarping>(label, filePathName);
         }
@@ -120,17 +116,14 @@ void ImageWarping::draw_save_image_file_dialog()
     IGFD::FileDialogConfig config;
     config.path = DATA_PATH;
     config.flags = ImGuiFileDialogFlags_Modal;
-    ImGuiFileDialog::Instance()->OpenDialog(
-        "ChooseImageSaveFileDlg", "Save Image As...", ".png", config);
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseImageSaveFileDlg", "Save Image As...", ".png", config);
     ImVec2 main_size = ImGui::GetMainViewport()->WorkSize;
     ImVec2 dlg_size(main_size.x / 2, main_size.y / 2);
-    if (ImGuiFileDialog::Instance()->Display(
-            "ChooseImageSaveFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
+    if (ImGuiFileDialog::Instance()->Display("ChooseImageSaveFileDlg", ImGuiWindowFlags_NoCollapse, dlg_size))
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
-            std::string filePathName =
-                ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
             //            std::string label = filePathName;
             if (p_image_)
                 p_image_->save_to_disk(filePathName);

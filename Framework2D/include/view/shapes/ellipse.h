@@ -9,9 +9,7 @@ class Ellipse : public Shape
    public:
     Ellipse() = default;
 
-    Ellipse(ImVec2 start_point, ImVec2 end_point)
-        : start_point_(start_point),
-          end_point_(end_point)
+    Ellipse(ImVec2 start_point, ImVec2 end_point) : start_point_(start_point), end_point_(end_point)
     {
     }
 
