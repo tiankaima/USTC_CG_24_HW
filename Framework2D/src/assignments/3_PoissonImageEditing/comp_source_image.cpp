@@ -85,8 +85,8 @@ void CompSourceImage::select_region()
 
             Eigen::MatrixXi mask_eigen = selected_region_->as_eigen_mask();
             poisson_ = std::make_shared<Poisson>();
-            poisson_->set_inside_mask(mask_eigen);
-            poisson_->PoissonInit(*data_);
+            poisson_->set_mask(mask_eigen);
+            poisson_->PoissonInit();
         }
     }
 

@@ -90,8 +90,18 @@ class Image
     {
         if (x < 0 || x >= width_ || y < 0 || y >= height_)
         {
-            std::cerr << "[GET] Pixel coordinates out of bounds" << std::endl;
-            return std::vector<unsigned char>(channels_);
+            if (x < 0)
+                x = 0;
+            if (x >= width_)
+                x = width_ - 1;
+            if (y < 0)
+                y = 0;
+            if (y >= height_)
+                y = height_ - 1;
+
+            return get_pixel(x, y);
+            // std::cerr << "[GET] Pixel coordinates out of bounds" << std::endl;
+            //  return std::vector<unsigned char>(channels_);
         }
         std::vector<unsigned char> pixelValues(channels_);
         std::size_t index = static_cast<std::size_t>(y) * static_cast<std::size_t>(width_) + static_cast<std::size_t>(x);
@@ -107,7 +117,7 @@ class Image
     {
         if (x < 0 || x >= width_ || y < 0 || y >= height_)
         {
-            std::cerr << "[SET] Pixel coordinates out of bounds" << std::endl;
+            // std::cerr << "[SET] Pixel coordinates out of bounds" << std::endl;
             return;
         }
         // Allow 3 channel input when channels.size()==4 (RGB -> RGBA)
@@ -116,7 +126,7 @@ class Image
             channels_reset = 3;
         else if (values.size() != static_cast<size_t>(channels_))
         {
-            std::cerr << "Number of values does not match the number of channels" << std::endl;
+            // std::cerr << "Number of values does not match the number of channels" << std::endl;
             return;
         }
         std::size_t index = static_cast<std::size_t>(y) * static_cast<std::size_t>(width_) + static_cast<std::size_t>(x);

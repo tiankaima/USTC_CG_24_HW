@@ -5,15 +5,6 @@
 
 namespace USTC_CG
 {
-Poisson::Poisson()
-{
-    pixels_num_ = 0;
-    index_matrix_.resize(0, 0);
-    sparse_matrix_.resize(0, 0);
-    width_ = 0;
-    height_ = 0;
-}
-
 std::vector<int> convert(const std::vector<unsigned char>& vec)
 {
     return std::vector<int>{ vec[0], vec[1], vec[2] };
@@ -27,257 +18,248 @@ Eigen::Vector3d convert_v(const std::vector<unsigned char>& vec)
     return result;
 }
 
-void Poisson::set_inside_mask(Eigen::MatrixXi inside_mask)
-{
-    inside_mask_ = std::move(inside_mask);
-}
-
-void Poisson::PoissonInit(const Image& source_img)
-{
-    width_ = (int)inside_mask_.rows();
-    height_ = (int)inside_mask_.cols();
-    paste_point_[0] = 0;
-    paste_point_[1] = 1;
-    index_matrix_.resize(width_, height_);
-    index_matrix_.setZero();
-    for (int i = 0; i < width_; i++)
-        for (int j = 0; j < height_; j++)
-            if (inside_mask_(i, j) == 1)
-                index_matrix_(i, j) = pixels_num_++;
-
-    sparse_matrix_.resize(pixels_num_, pixels_num_);
-    sparse_matrix_.setZero();
-
-    std::vector<Eigen::Triplet<float>> coef;
-    for (int i = 0; i < width_; i++)
-    {
-        for (int j = 0; j < height_; j++)
-        {
-            if (inside_mask_(i, j) == 1)
-            {
-                int index = index_matrix_(i, j);
-                coef.push_back(Eigen::Triplet<float>(index, index, 4));
-                if (i > 0 && inside_mask_(i - 1, j) == 1)
-                    coef.push_back(Eigen::Triplet<float>(index, index_matrix_(i - 1, j), -1));
-
-                if (j > 0 && inside_mask_(i, j - 1) == 1)
-                    coef.push_back(Eigen::Triplet<float>(index, index_matrix_(i, j - 1), -1));
-
-                if (i < width_ - 1 && inside_mask_(i + 1, j) == 1)
-                    coef.push_back(Eigen::Triplet<float>(index, index_matrix_(i + 1, j), -1));
-
-                if (j < height_ - 1 && inside_mask_(i, j + 1) == 1)
-                    coef.push_back(Eigen::Triplet<float>(index, index_matrix_(i, j + 1), -1));
-            }
-        }
-    }
-    sparse_matrix_.setFromTriplets(coef.begin(), coef.end());
-    sparse_matrix_.makeCompressed();
-
-    Predecomposition();
-}
-
-void Poisson::Predecomposition()
-{
-    solver.compute(sparse_matrix_);
-    if (solver.info() != Eigen::Success)
-    {
-        std::cerr << "Compute Matrix is error" << std::endl;
-        return;
-    }
-}
-
-void Poisson::GetPoisson(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int, 2> source_point, Image& paste_img_, const Image& source_img_)
-{
-    paste_point_ = std::move(paste_point);
-    source_point_ = std::move(source_point);
-
-    div_red_.resize(pixels_num_);
-    div_green_.resize(pixels_num_);
-    div_blue_.resize(pixels_num_);
-    div_red_.setZero();
-    div_green_.setZero();
-    div_blue_.setZero();
-
-    for (int i = 0; i < width_; i++)
-    {
-        for (int j = 0; j < height_; j++)
-        {
-            if (inside_mask_(i, j) == 1)
-            {
-                int index = index_matrix_(i, j);
-                int x = source_point_.x() + i;
-                int y = source_point_.y() + j;
-
-                auto temp_vec = convert_v(source_img_.get_pixel(x, y));
-                temp_vec *= 4;
-                temp_vec -= convert_v(source_img_.get_pixel(x + 1, y));
-                temp_vec -= convert_v(source_img_.get_pixel(x - 1, y));
-                temp_vec -= convert_v(source_img_.get_pixel(x, y - 1));
-                temp_vec -= convert_v(source_img_.get_pixel(x, y + 1));
-
-                div_red_(index_matrix_(i, j)) += temp_vec[0];
-                div_green_(index_matrix_(i, j)) += temp_vec[1];
-                div_blue_(index_matrix_(i, j)) += temp_vec[2];
-
-                if (i == 0 || (i > 0 && inside_mask_(i - 1, j) == 0))
-                {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[2];
-                }
-                if (i == width_ - 1 || (i < width_ - 1 && inside_mask_(i + 1, j) == 0))
-                {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[2];
-                }
-                if (j == 0 || (j > 0 && inside_mask_(i, j - 1) == 0))
-                {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[2];
-                }
-                if (j == height_ - 1 || (j < height_ - 1 && inside_mask_(i, j + 1) == 0))
-                {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[2];
-                }
-            }
-        }
-    }
-
-    Eigen::VectorXd vec_red(pixels_num_);
-    Eigen::VectorXd vec_green(pixels_num_);
-    Eigen::VectorXd vec_blue(pixels_num_);
-
-    vec_red = solver.solve(div_red_);
-    vec_green = solver.solve(div_green_);
-    vec_blue = solver.solve(div_blue_);
-
-    for (int i = 0; i < width_; i++)
-    {
-        for (int j = 0; j < height_; j++)
-        {
-            if (inside_mask_(i, j) == 1)
-            {
-                int index = index_matrix_(i, j);
-                int red = (int)vec_red(index);
-                int green = (int)vec_green(index);
-                int blue = (int)vec_blue(index);
-
-                unsigned char red_ = red > 255 ? 255 : (red < 0 ? 0 : red);
-                unsigned char green_ = green > 255 ? 255 : (green < 0 ? 0 : green);
-                unsigned char blue_ = blue > 255 ? 255 : (blue < 0 ? 0 : blue);
-
-                if (i + paste_point_.x() < paste_img_.width() && j + paste_point_.y() < paste_img_.height())
-                    paste_img_.set_pixel(i + paste_point_.x(), j + paste_point_.y(), { red_, green_, blue_ });
-            }
-        }
-    }
-}
-
-double Poisson::VecLength(const Eigen::Vector3d& vec)
+double VecLength(const Eigen::Vector3d& vec)
 {
     return sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
 }
 
-void Poisson::MixingPoisson(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int, 2> source_point, Image& paste_img_, const Image& source_img_)
+void Poisson::set_mask(Eigen::MatrixXi mask)
 {
-    paste_point_ = std::move(paste_point);
-    source_point_ = std::move(source_point);
+    mask_ = std::move(mask);
+}
 
-    div_red_.resize(pixels_num_);
-    div_green_.resize(pixels_num_);
-    div_blue_.resize(pixels_num_);
-    div_red_.setZero();
-    div_green_.setZero();
-    div_blue_.setZero();
+void Poisson::PoissonInit()
+{
+    width_ = (int)mask_.rows();
+    height_ = (int)mask_.cols();
+    index_.resize(width_, height_);
+    index_.setZero();
+    for (int i = 0; i < width_; i++)
+        for (int j = 0; j < height_; j++)
+            if (mask_(i, j) == 1)
+                index_(i, j) = num_++;
+
+    sparse_.resize(num_, num_);
+    sparse_.setZero();
+
+    std::vector<Eigen::Triplet<float>> coefficients;
+    for (int i = 0; i < width_; i++)
+    {
+        for (int j = 0; j < height_; j++)
+        {
+            if (mask_(i, j) == 1)
+            {
+                int index = index_(i, j);
+                coefficients.push_back(Eigen::Triplet<float>(index, index, 4));
+                if (i > 0 && mask_(i - 1, j) == 1)
+                    coefficients.push_back(Eigen::Triplet<float>(index, index_(i - 1, j), -1));
+
+                if (j > 0 && mask_(i, j - 1) == 1)
+                    coefficients.push_back(Eigen::Triplet<float>(index, index_(i, j - 1), -1));
+
+                if (i < width_ - 1 && mask_(i + 1, j) == 1)
+                    coefficients.push_back(Eigen::Triplet<float>(index, index_(i + 1, j), -1));
+
+                if (j < height_ - 1 && mask_(i, j + 1) == 1)
+                    coefficients.push_back(Eigen::Triplet<float>(index, index_(i, j + 1), -1));
+            }
+        }
+    }
+    sparse_.setFromTriplets(coefficients.begin(), coefficients.end());
+    sparse_.makeCompressed();
+
+    solver_.compute(sparse_);
+    if (solver_.info() != Eigen::Success)
+    {
+        std::cerr << "Compute failed" << std::endl;
+        return;
+    }
+}
+
+void Poisson::apply_seamless(
+    const Eigen::Vector2i& to_offset,
+    const Eigen::Vector2i& from_offset,
+    const std::shared_ptr<Image>& to,
+    const Image& from)
+{
+    b_r_.resize(num_);
+    b_g_.resize(num_);
+    b_b_.resize(num_);
+    b_r_.setZero();
+    b_g_.setZero();
+    b_b_.setZero();
 
     for (int i = 0; i < width_; i++)
     {
         for (int j = 0; j < height_; j++)
         {
-            if (inside_mask_(i, j) == 1)
+            if (mask_(i, j) == 1)
             {
-                int index = index_matrix_(i, j);
-                int x = source_point_.x() + i;
-                int y = source_point_.y() + j;
-                int x_ = paste_point_.x() + i;
-                int y_ = paste_point_.y() + j;
+                int index = index_(i, j);
+                int x = from_offset.x() + i;
+                int y = from_offset.y() + j;
 
-                Eigen::Vector3d vec, temp_vec, temp_vec_paste;
+                auto temp_vec = convert_v(from.get_pixel(x, y));
+                temp_vec *= 4;
+                temp_vec -= convert_v(from.get_pixel(x + 1, y));
+                temp_vec -= convert_v(from.get_pixel(x - 1, y));
+                temp_vec -= convert_v(from.get_pixel(x, y - 1));
+                temp_vec -= convert_v(from.get_pixel(x, y + 1));
 
-                temp_vec = convert_v(source_img_.get_pixel(x, y));
-                temp_vec -= convert_v(source_img_.get_pixel(x + 1, y));
-                temp_vec_paste = convert_v(paste_img_.get_pixel(x_, y_));
-                temp_vec_paste -= convert_v(paste_img_.get_pixel(x_ + 1, y_));
-                vec = VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
+                b_r_(index_(i, j)) += temp_vec[0];
+                b_g_(index_(i, j)) += temp_vec[1];
+                b_b_(index_(i, j)) += temp_vec[2];
 
-                temp_vec = convert_v(source_img_.get_pixel(x, y));
-                temp_vec -= convert_v(source_img_.get_pixel(x - 1, y));
-                temp_vec_paste = convert_v(paste_img_.get_pixel(x_, y_));
-                temp_vec_paste -= convert_v(paste_img_.get_pixel(x_ - 1, y_));
-                vec += VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
-
-                temp_vec = convert_v(source_img_.get_pixel(x, y));
-                temp_vec -= convert_v(source_img_.get_pixel(x, y + 1));
-                temp_vec_paste = convert_v(paste_img_.get_pixel(x_, y_));
-                temp_vec_paste -= convert_v(paste_img_.get_pixel(x_, y_ + 1));
-                vec += VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
-
-                temp_vec = convert_v(source_img_.get_pixel(x, y));
-                temp_vec -= convert_v(source_img_.get_pixel(x, y - 1));
-                temp_vec_paste = convert_v(paste_img_.get_pixel(x_, y_));
-                temp_vec_paste -= convert_v(paste_img_.get_pixel(x_, y_ - 1));
-                vec += VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
-
-                div_red_(index_matrix_(i, j)) = vec[0];
-                div_green_(index_matrix_(i, j)) = vec[1];
-                div_blue_(index_matrix_(i, j)) = vec[2];
-
-                if (i == 0 || (i > 0 && inside_mask_(i - 1, j) == 0))
+                if (i == 0 || (i > 0 && mask_(i - 1, j) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() - 1, j + paste_point_.y())[2];
+                    b_r_[index] += to->get_pixel(i + to_offset.x() - 1, j + to_offset.y())[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x() - 1, j + to_offset.y())[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x() - 1, j + to_offset.y())[2];
                 }
-                if (i == width_ - 1 || (i < width_ - 1 && inside_mask_(i + 1, j) == 0))
+                if (i == width_ - 1 || (i < width_ - 1 && mask_(i + 1, j) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x() + 1, j + paste_point_.y())[2];
+                    b_r_[index] += to->get_pixel(i + to_offset.x() + 1, j + to_offset.y())[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x() + 1, j + to_offset.y())[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x() + 1, j + to_offset.y())[2];
                 }
-                if (j == 0 || (j > 0 && inside_mask_(i, j - 1) == 0))
+                if (j == 0 || (j > 0 && mask_(i, j - 1) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() - 1)[2];
+                    b_r_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() - 1)[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() - 1)[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() - 1)[2];
                 }
-                if (j == height_ - 1 || (j < height_ - 1 && inside_mask_(i, j + 1) == 0))
+                if (j == height_ - 1 || (j < height_ - 1 && mask_(i, j + 1) == 0))
                 {
-                    div_red_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[0];
-                    div_green_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[1];
-                    div_blue_[index] += paste_img_.get_pixel(i + paste_point_.x(), j + paste_point_.y() + 1)[2];
+                    b_r_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() + 1)[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() + 1)[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() + 1)[2];
                 }
             }
         }
     }
 
-    Eigen::VectorXd vec_red(pixels_num_);
-    Eigen::VectorXd vec_green(pixels_num_);
-    Eigen::VectorXd vec_blue(pixels_num_);
+    Eigen::VectorXd vec_r(num_);
+    Eigen::VectorXd vec_g(num_);
+    Eigen::VectorXd vec_b(num_);
 
-    vec_red = solver.solve(div_red_);
-    vec_green = solver.solve(div_green_);
-    vec_blue = solver.solve(div_blue_);
+    vec_r = solver_.solve(b_r_);
+    vec_g = solver_.solve(b_g_);
+    vec_b = solver_.solve(b_b_);
+
+    for (int i = 0; i < width_; i++)
+    {
+        for (int j = 0; j < height_; j++)
+        {
+            if (mask_(i, j) == 1)
+            {
+                int index = index_(i, j);
+                int red = (int)vec_r(index);
+                int green = (int)vec_g(index);
+                int blue = (int)vec_b(index);
+
+                unsigned char red_ = red > 255 ? 255 : (red < 0 ? 0 : red);
+                unsigned char green_ = green > 255 ? 255 : (green < 0 ? 0 : green);
+                unsigned char blue_ = blue > 255 ? 255 : (blue < 0 ? 0 : blue);
+
+                if (i + to_offset.x() < to->width() && j + to_offset.y() < to->height())
+                    to->set_pixel(i + to_offset.x(), j + to_offset.y(), { red_, green_, blue_ });
+            }
+        }
+    }
+}
+
+void Poisson::apply_mixed(const Eigen::Vector2i& to_offset, const Eigen::Vector2i& from_offset, const std::shared_ptr<Image>& to, const Image& from)
+{
+    b_r_.resize(num_);
+    b_g_.resize(num_);
+    b_b_.resize(num_);
+    b_r_.setZero();
+    b_g_.setZero();
+    b_b_.setZero();
+
+    for (int i = 0; i < width_; i++)
+    {
+        for (int j = 0; j < height_; j++)
+        {
+            if (mask_(i, j) == 1)
+            {
+                int index = index_(i, j);
+                int x = from_offset.x() + i;
+                int y = from_offset.y() + j;
+                int x_ = to_offset.x() + i;
+                int y_ = to_offset.y() + j;
+
+                Eigen::Vector3d vec, temp_vec, temp_vec_paste;
+
+                temp_vec = convert_v(from.get_pixel(x, y));
+                temp_vec -= convert_v(from.get_pixel(x + 1, y));
+                temp_vec_paste = convert_v(to->get_pixel(x_, y_));
+                temp_vec_paste -= convert_v(to->get_pixel(x_ + 1, y_));
+                vec = VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
+
+                temp_vec = convert_v(from.get_pixel(x, y));
+                temp_vec -= convert_v(from.get_pixel(x - 1, y));
+                temp_vec_paste = convert_v(to->get_pixel(x_, y_));
+                temp_vec_paste -= convert_v(to->get_pixel(x_ - 1, y_));
+                vec += VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
+
+                temp_vec = convert_v(from.get_pixel(x, y));
+                temp_vec -= convert_v(from.get_pixel(x, y + 1));
+                temp_vec_paste = convert_v(to->get_pixel(x_, y_));
+                temp_vec_paste -= convert_v(to->get_pixel(x_, y_ + 1));
+                vec += VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
+
+                temp_vec = convert_v(from.get_pixel(x, y));
+                temp_vec -= convert_v(from.get_pixel(x, y - 1));
+                temp_vec_paste = convert_v(to->get_pixel(x_, y_));
+                temp_vec_paste -= convert_v(to->get_pixel(x_, y_ - 1));
+                vec += VecLength(temp_vec) > VecLength(temp_vec_paste) ? temp_vec : temp_vec_paste;
+
+                b_r_(index_(i, j)) = vec[0];
+                b_g_(index_(i, j)) = vec[1];
+                b_b_(index_(i, j)) = vec[2];
+
+                if (i == 0 || (i > 0 && mask_(i - 1, j) == 0))
+                {
+                    b_r_[index] += to->get_pixel(i + to_offset.x() - 1, j + to_offset.y())[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x() - 1, j + to_offset.y())[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x() - 1, j + to_offset.y())[2];
+                }
+                if (i == width_ - 1 || (i < width_ - 1 && mask_(i + 1, j) == 0))
+                {
+                    b_r_[index] += to->get_pixel(i + to_offset.x() + 1, j + to_offset.y())[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x() + 1, j + to_offset.y())[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x() + 1, j + to_offset.y())[2];
+                }
+                if (j == 0 || (j > 0 && mask_(i, j - 1) == 0))
+                {
+                    b_r_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() - 1)[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() - 1)[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() - 1)[2];
+                }
+                if (j == height_ - 1 || (j < height_ - 1 && mask_(i, j + 1) == 0))
+                {
+                    b_r_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() + 1)[0];
+                    b_g_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() + 1)[1];
+                    b_b_[index] += to->get_pixel(i + to_offset.x(), j + to_offset.y() + 1)[2];
+                }
+            }
+        }
+    }
+
+    Eigen::VectorXd vec_red(num_);
+    Eigen::VectorXd vec_green(num_);
+    Eigen::VectorXd vec_blue(num_);
+
+    vec_red = solver_.solve(b_r_);
+    vec_green = solver_.solve(b_g_);
+    vec_blue = solver_.solve(b_b_);
 
     for (int i = 0; i < width_; i++)
         for (int j = 0; j < height_; j++)
-            if (inside_mask_(i, j) == 1)
+            if (mask_(i, j) == 1)
             {
-                int index = index_matrix_(i, j);
+                int index = index_(i, j);
                 int red = (int)vec_red(index);
                 int green = (int)vec_green(index);
                 int blue = (int)vec_blue(index);
@@ -286,19 +268,17 @@ void Poisson::MixingPoisson(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int
                 unsigned char green_ = green > 255 ? 255 : (green < 0 ? 0 : green);
                 unsigned char blue_ = blue > 255 ? 255 : (blue < 0 ? 0 : blue);
 
-                if (i + paste_point_.x() < paste_img_.width() && j + paste_point_.y() < paste_img_.height())
-                    paste_img_.set_pixel(i + paste_point_.x(), j + paste_point_.y(), { red_, green_, blue_ });
+                if (i + to_offset.x() < to->width() && j + to_offset.y() < to->height())
+                    to->set_pixel(i + to_offset.x(), j + to_offset.y(), { red_, green_, blue_ });
             }
 }
 
-void Poisson::CopyPaste(Eigen::Vector<int, 2> paste_point, Eigen::Vector<int, 2> source_point, Image& paste_img_, const Image& source_img_)
+void Poisson::apply_paste(const Eigen::Vector2i& to_offset, const Eigen::Vector2i& from_offset, const std::shared_ptr<Image>& to, const Image& from)
 {
-    paste_point_ = std::move(paste_point);
-    source_point_ = std::move(source_point);
     for (int i = 0; i < width_; i++)
         for (int j = 0; j < height_; j++)
-            if (inside_mask_(i, j) == 1 && i + paste_point_.x() < paste_img_.width() && j + paste_point_.y() < paste_img_.height() &&
-                i + source_point_.x() < source_img_.width() && j + source_point_.y() < source_img_.height())
-                paste_img_.set_pixel(i + paste_point_.x(), j + paste_point_.y(), source_img_.get_pixel(i + source_point_.x(), j + source_point_.y()));
+            if (mask_(i, j) == 1 && i + to_offset.x() < to->width() && j + to_offset.y() < to->height() && i + from_offset.x() < from.width() &&
+                j + from_offset.y() < from.height())
+                to->set_pixel(i + to_offset.x(), j + to_offset.y(), from.get_pixel(i + from_offset.x(), j + from_offset.y()));
 }
 }  // namespace USTC_CG

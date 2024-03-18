@@ -59,70 +59,17 @@ void CompTargetImage::restore()
     update();
 }
 
-void CompTargetImage::set_paste()
-{
-    clone_type_ = CloneType::kPaste;
-}
-
-void CompTargetImage::set_seamless()
-{
-    clone_type_ = CloneType::kSeamless;
-}
-
-void CompTargetImage::set_mixed()
-{
-    clone_type_ = CloneType::kMixed;
-}
-
 void CompTargetImage::clone()
 {
-    // The implementation of different types of cloning
-    // HW3_TODO: In this function, you should at least implement the "seamless"
-    // cloning labeled by `clone_type_ ==kSeamless`.
-    //
-    // The realtime updating (update when the mouse is moving) is only available
-    // when the checkbox is selected. It is required to improve the efficiency
-    // of your seamless cloning to achieve realtime editing. (Use decomposition
-    // of sparse matrix before solve the linear system)
     if (data_ == nullptr || source_image_ == nullptr || source_image_->get_region() == nullptr)
         return;
-    std::shared_ptr<Image> mask = source_image_->get_region();
-
-    switch (clone_type_)
-    {
-        case CompTargetImage::CloneType::kDefault: break;
-        case CompTargetImage::CloneType::kPaste:
-        {
-            restore();
-            source_image_->get_poisson()->CopyPaste(
-                { (int)(mouse_position_.x - source_image_->get_position().x), (int)(mouse_position_.y - source_image_->get_position().y) },
-                { 0, 0 },
-                *data_,
-                *source_image_->get_data());
-            break;
-        }
-        case CompTargetImage::CloneType::kSeamless:
-        {
-            restore();
-            source_image_->get_poisson()->GetPoisson(
-                { (int)(mouse_position_.x - source_image_->get_position().x), (int)(mouse_position_.y - source_image_->get_position().y) },
-                { 0, 0 },
-                *data_,
-                *source_image_->get_data());
-            break;
-        }
-        case CompTargetImage::CloneType::kMixed:
-        {
-            restore();
-            source_image_->get_poisson()->MixingPoisson(
-                { (int)(mouse_position_.x - source_image_->get_position().x), (int)(mouse_position_.y - source_image_->get_position().y) },
-                { 0, 0 },
-                *data_,
-                *source_image_->get_data());
-            break;
-        }
-        default: break;
-    }
+    restore();
+    source_image_->get_poisson()->apply_type(
+        { (int)(mouse_position_.x - source_image_->get_position().x), (int)(mouse_position_.y - source_image_->get_position().y) },
+        { 0, 0 },
+        data_,
+        *source_image_->get_data(),
+        clone_type_);
     update();
 }
 }  // namespace USTC_CG

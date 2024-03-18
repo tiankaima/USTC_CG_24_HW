@@ -2,6 +2,7 @@
 
 #include <ImGuiFileDialog.h>
 
+#include <format>
 #include <iostream>
 
 namespace USTC_CG
@@ -79,29 +80,17 @@ void WindowPoisson::draw_toolbar()
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Paste") && p_target_ && p_source_)
+        for (auto type : Poisson::CloneTypeList())
         {
-            p_target_->set_paste();
+            if (ImGui::MenuItem(Poisson::CloneTypeName(type).c_str()) && p_target_ && p_source_)
+            {
+                p_target_->set_clone_type(type);
+            }
+            add_tooltips(std::format(
+                "Press this button and then click in the target image, to "
+                "clone the selected region to the target image with {} cloning.",
+                Poisson::CloneTypeName(type)));
         }
-        add_tooltips(
-            "Press this button and then click in the target image, to "
-            "clone the selected region to the target image.");
-        if (ImGui::MenuItem("Seamless") && p_target_ && p_source_)
-        {
-            p_target_->set_seamless();
-        }
-        add_tooltips(
-            "Press this button and then click in the target image, to "
-            "clone the selected region to the target image with seamless "
-            "cloning.");
-        if (ImGui::MenuItem("Mixed") && p_target_ && p_source_)
-        {
-            p_target_->set_mixed();
-        }
-        add_tooltips(
-            "Press this button and then click in the target image, to "
-            "clone the selected region to the target image with mixed "
-            "cloning.");
 
         ImGui::EndMainMenuBar();
     }
