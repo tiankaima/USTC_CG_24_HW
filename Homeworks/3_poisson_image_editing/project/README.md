@@ -37,15 +37,13 @@ class Poisson
 }
 ```
 
-其中 `set_mask` 时计算矩阵预分解，`apply()` 用于变形，基于此实现实时拖动的效果。
+其中 `set_mask` 时计算矩阵预分解，`apply()` 用于实际的融合操作。
 
 ### 额外功能 Extra Features
 
 #### 复杂边界实现（多边形光栅化的扫描线转换算法）
 
-实现方法：限于时间原因（看起来已经是晚交了……），增加 `RegionType` 并补充扫描线实现。
-
-相关代码位于 `src/assignment/3_ImageWarping/comp_source_image.cpp` 中：
+增加 `RegionType` 并补充扫描线实现，相关代码位于 `src/assignment/3_ImageWarping/comp_source_image.cpp` 中：
 
 ```cpp
 for (int i = 0; i < selected_region_->width(); ++i) {
@@ -74,11 +72,13 @@ for (int i = 0; i < selected_region_->width(); ++i) {
 
 ## 运行截图 Screenshots
 
-IDW:
+Polygon & Mixed:
 
 ![screenshot_poly](./figs/screenshot_poly.png)
 
-RBF:
+> 扫描线的正确性可以由 Paste 验证，忘记截图了。
+
+Rectangle & Seamless:
 
 ![screenshot](./figs/screenshot.png)
 
