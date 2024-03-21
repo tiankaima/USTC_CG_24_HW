@@ -1,8 +1,12 @@
-build/
-bin/
+build
+bin
+debug
+release
+cmake-build-debug
+cmake-build-release
+libs
+
 .vscode
 .idea
-cmake-build-debug
-libs/
 imgui.ini
 .cache
