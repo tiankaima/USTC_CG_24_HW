@@ -1,0 +1,11 @@
+compilation_database_dir: ./debug
+output_directory: diagrams
+diagrams:
+  4_tutte_parametrzation:
+    type: class
+    glob:
+      - tests/GUI/engine.cpp
+    using_namespace: USTC_CG
+    include:
+      namespaces:
+        - r: '.*'
