@@ -1,116 +1,107 @@
+
+#include "Eigen/Core"
+#include "Eigen/SparseCholesky"
+#include "Eigen/SparseLU"
 #include "GCore/Components/MeshOperand.h"
 #include "Nodes/node.hpp"
 #include "Nodes/node_declare.hpp"
 #include "Nodes/node_register.h"
 #include "geom_node_base.h"
+#include "iostream"
 #include "utils/util_openmesh_bind.h"
-
-/*
-** @brief HW4_TutteParameterization
-**
-** This file presents the basic framework of a "node", which processes inputs
-** received from the left and outputs specific variables for downstream nodes to
-** use.
-** - In the first function, node_declare, you can set up the node's input and
-** output variables.
-** - The second function, node_exec is the execution part of the node, where we
-** need to implement the node's functionality.
-** - The third function generates the node's registration information, which
-** eventually allows placing this node in the GUI interface.
-**
-** Your task is to fill in the required logic at the specified locations
-** within this template, especially in node_exec.
-*/
 
 namespace USTC_CG::node_min_surf {
 static void node_min_surf_declare(NodeDeclarationBuilder& b)
 {
     // Input-1: Original 3D mesh with boundary
     b.add_input<decl::Geometry>("Input");
-
-    /*
-    ** NOTE: You can add more inputs or outputs if necessary. For example, in some cases,
-    ** additional information (e.g. other mesh geometry, other parameters) is required to perform
-    ** the computation.
-    **
-    ** Be sure that the input/outputs do not share the same name. You can add one geometry as
-    **
-    **                b.add_input<decl::Geometry>("Input");
-    **
-    ** Or maybe you need a value buffer like:
-    **
-    **                b.add_input<decl::Float1Buffer>("Weights");
-    */
-
-    // Output-1: Minimal surface with fixed boundary
+    b.add_input<decl::Float1Buffer>("Weight");
     b.add_output<decl::Geometry>("Output");
+}
+
+double cos(auto v1, auto v2)
+{
+    return v1.dot(v2) / (v1.norm() * v2.norm());
+}
+
+double cot(auto v1, auto v2)
+{
+    auto cos = v1.dot(v2) / (v1.norm() * v2.norm());
+    return cos / std::sqrt(1 - cos * cos);
 }
 
 static void node_min_surf_exec(ExeParams params)
 {
-    // Get the input from params
     auto input = params.get_input<GOperandBase>("Input");
-
-    // (TO BE UPDATED) Avoid processing the node when there is no input
     if (!input.get_component<MeshComponent>()) {
         throw std::runtime_error("Minimal Surface: Need Geometry Input.");
     }
-    throw std::runtime_error("Not implemented");
 
-    /* ----------------------------- Preprocess -------------------------------
-    ** Create a halfedge structure (using OpenMesh) for the input mesh. The
-    ** half-edge data structure is a widely used data structure in geometric
-    ** processing, offering convenient operations for traversing and modifying
-    ** mesh elements.
-    */
-    auto halfedge_mesh = operand_to_openmesh(&input);
+    auto mesh = operand_to_openmesh(&input);
+    auto n = mesh->n_vertices();
+    auto weight = params.get_input<pxr::VtArray<float>>("Weight");
 
-    /* ---------------- [HW4_TODO] TASK 1: Minimal Surface --------------------
-    ** In this task, you are required to generate a 'minimal surface' mesh with
-    ** the boundary of the input mesh as its boundary.
-    **
-    ** Specifically, the positions of the boundary vertices of the input mesh
-    ** should be fixed. By solving a global Laplace equation on the mesh,
-    ** recalculate the coordinates of the vertices inside the mesh to achieve
-    ** the minimal surface configuration.
-    **
-    ** (Recall the Poisson equation with Dirichlet Boundary Condition in HW3)
-    */
+    if (n == 0) {
+        throw std::runtime_error("No vertices in the mesh.");
+    }
+    if (weight.size() != n * n) {
+        throw std::runtime_error("size(weight) != n * n");
+    }
 
-    /*
-    ** Algorithm Pseudocode for Minimal Surface Calculation
-    ** ------------------------------------------------------------------------
-    ** 1. Initialize mesh with input boundary conditions.
-    **    - For each boundary vertex, fix its position.
-    **    - For internal vertices, initialize with initial guess if necessary.
-    **
-    ** 2. Construct Laplacian matrix for the mesh.
-    **    - Compute weights for each edge based on the chosen weighting scheme
-    **      (e.g., uniform weights for simplicity).
-    **    - Assemble the global Laplacian matrix.
-    **
-    ** 3. Solve the Laplace equation for interior vertices.
-    **    - Apply Dirichlet boundary conditions for boundary vertices.
-    **    - Solve the linear system (Laplacian * X = 0) to find new positions
-    **      for internal vertices.
-    **
-    ** 4. Update mesh geometry with new vertex positions.
-    **    - Ensure the mesh respects the minimal surface configuration.
-    **
-    ** Note: This pseudocode outlines the general steps for calculating a
-    ** minimal surface mesh given fixed boundary conditions using the Laplace
-    ** equation. The specific implementation details may vary based on the mesh
-    ** representation and numerical methods used.
-    **
-    */
+    std::vector<Eigen::Triplet<double>> coefficients;
+    Eigen::VectorXd b_x, b_y, b_z;
 
-    /* ----------------------------- Postprocess ------------------------------
-    ** Convert the minimal surface mesh from the halfedge structure back to
-    ** GOperandBase format as the node's output.
-    */
-    auto operand_base = openmesh_to_operand(halfedge_mesh.get());
+    b_x.resize(n);
+    b_y.resize(n);
+    b_z.resize(n);
+    b_x.setZero();
+    b_y.setZero();
+    b_z.setZero();
 
-    // Set the output of the nodes
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            if (weight[i * n + j] != 0)
+                coefficients.push_back(Eigen::Triplet<double>(i, j, weight[i * n + j]));
+
+    for (const auto& vertex : mesh->vertices()) {
+        auto i = vertex.idx();
+        PolyMesh::Point p = mesh->point(vertex);
+        if (vertex.is_boundary()) {
+            b_x[i] = p[0];
+            b_y[i] = p[1];
+            b_z[i] = p[2];
+            continue;
+        }
+        else {
+            b_x[i] = 0;
+            b_y[i] = 0;
+            b_z[i] = 0;
+        }
+    }
+
+    // Generate sparse matrix out of coefficients
+    Eigen::SparseMatrix<double> A(n, n);
+    A.setZero();
+    A.setFromTriplets(coefficients.begin(), coefficients.end());
+
+    // Solve the linear system
+    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
+    solver.compute(A);
+    if (solver.info() != Eigen::Success) {
+        throw std::runtime_error("Failed to decompose the matrix.");
+    }
+
+    // Solve the linear system
+    Eigen::VectorXd x = solver.solve(b_x);
+    Eigen::VectorXd y = solver.solve(b_y);
+    Eigen::VectorXd z = solver.solve(b_z);
+
+    auto mesh_new = std::make_unique<PolyMesh>(*mesh);
+    for (auto vertex : mesh_new->vertices()) {
+        auto i = vertex.idx();
+        mesh_new->set_point(vertex, PolyMesh::Point(x[i], y[i], z[i]));
+    }
+    auto operand_base = openmesh_to_operand(mesh_new.get());
     params.set_output("Output", std::move(*operand_base));
 }
 
@@ -118,7 +109,7 @@ static void node_register()
 {
     static NodeTypeInfo ntype;
 
-    strcpy(ntype.ui_name, "Minimal Surface");
+    strcpy_s(ntype.ui_name, "Minimal Surface");
     strcpy_s(ntype.id_name, "geom_min_surf");
 
     geo_node_type_base(&ntype);

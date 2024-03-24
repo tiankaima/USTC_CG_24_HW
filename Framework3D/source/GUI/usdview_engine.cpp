@@ -20,13 +20,13 @@ class UsdviewEngineImpl {
    public:
     enum class CamType { First, Third };
     struct Status {
-        CamType cam_type = CamType::First;  // 0 for 1st personal, 1 for 3rd personal
+        CamType cam_type = CamType::Third;  // 0 for 1st personal, 1 for 3rd personal
     } engine_status;
     UsdviewEngineImpl(pxr::UsdStageRefPtr stage)
     {
         renderer_ = std::make_unique<UsdImagingGLEngine>();
         renderer_->SetEnablePresentation(true);
-        free_camera_ = std::make_unique<FirstPersonCamera>();
+        free_camera_ = std::make_unique<ThirdPersonCamera>();
 
         auto plugins = renderer_->GetRendererPlugins();
         renderer_->SetRendererPlugin(plugins[0]);
