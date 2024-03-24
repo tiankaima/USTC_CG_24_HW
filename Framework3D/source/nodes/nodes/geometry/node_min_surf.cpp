@@ -19,17 +19,6 @@ static void node_min_surf_declare(NodeDeclarationBuilder& b)
     b.add_output<decl::Geometry>("Output");
 }
 
-double cos(auto v1, auto v2)
-{
-    return v1.dot(v2) / (v1.norm() * v2.norm());
-}
-
-double cot(auto v1, auto v2)
-{
-    auto cos = v1.dot(v2) / (v1.norm() * v2.norm());
-    return cos / std::sqrt(1 - cos * cos);
-}
-
 static void node_min_surf_exec(ExeParams params)
 {
     auto input = params.get_input<GOperandBase>("Input");
@@ -38,7 +27,7 @@ static void node_min_surf_exec(ExeParams params)
     }
 
     auto mesh = operand_to_openmesh(&input);
-    auto n = mesh->n_vertices();
+    auto n = (long long)mesh->n_vertices();
     auto weight = params.get_input<pxr::VtArray<float>>("Weight");
 
     if (n == 0) {
@@ -61,7 +50,7 @@ static void node_min_surf_exec(ExeParams params)
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
             if (weight[i * n + j] != 0)
-                coefficients.push_back(Eigen::Triplet<double>(i, j, weight[i * n + j]));
+                coefficients.emplace_back(i, j, weight[i * n + j]);
 
     for (const auto& vertex : mesh->vertices()) {
         auto i = vertex.idx();

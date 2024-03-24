@@ -1,3 +1,5 @@
+#include <Eigen/Core>
+
 #include "GCore/Components/MeshOperand.h"
 #include "Nodes/node.hpp"
 #include "Nodes/node_declare.hpp"
@@ -5,147 +7,174 @@
 #include "geom_node_base.h"
 #include "utils/util_openmesh_bind.h"
 
-/*
-** @brief HW4_TutteParameterization
-**
-** This file contains two nodes whose primary function is to map the boundary of a mesh to a plain
-** convex closed curve (circle of square), setting the stage for subsequent Laplacian equation
-** solution and mesh parameterization tasks.
-**
-** Key to this node's implementation is the adept manipulation of half-edge data structures
-** to identify and modify the boundary of the mesh.
-**
-** Task Overview:
-** - The two execution functions (node_map_boundary_to_square_exec,
-** node_map_boundary_to_circle_exec) require an update to accurately map the mesh boundary to a and
-** circles. This entails identifying the boundary edges, evenly distributing boundary vertices along
-** the square's perimeter, and ensuring the internal vertices' positions remain unchanged.
-** - A focus on half-edge data structures to efficiently traverse and modify mesh boundaries.
-*/
-
 namespace USTC_CG::node_boundary_mapping {
 
-/*
-** HW4_TODO: Node to map the mesh boundary to a circle.
-*/
+auto find_boundary_loop(PolyMesh* mesh)
+{
+    OpenMesh::SmartVertexHandle start_vertex;
+    for (auto vertex : mesh->vertices()) {
+        if (vertex.is_boundary()) {
+            start_vertex = vertex;
+            break;
+        }
+    }
+
+    std::vector<PolyMesh::VertexHandle> boundary_loop;
+    auto current_vertex = start_vertex;
+    do {
+        boundary_loop.push_back(current_vertex);
+        for (auto vertex : current_vertex.vertices()) {
+            if (vertex.is_boundary()) {
+                current_vertex = vertex;
+                break;
+            }
+        }
+    } while (current_vertex != start_vertex);
+
+    return boundary_loop;
+}
+
+std::vector<double> calculate_boundary_lengths(
+    PolyMesh* mesh,
+    const std::vector<PolyMesh::VertexHandle>& boundary_loop)
+{
+    std::vector<double> lengths;
+    for (size_t i = 0; i < boundary_loop.size(); i++) {
+        auto next_vertex = boundary_loop[(i + 1) % boundary_loop.size()];
+        lengths.push_back((mesh->point(next_vertex) - mesh->point(boundary_loop[i])).norm());
+    }
+    return lengths;
+}
+
+double calculate_boundary_length(
+    PolyMesh* mesh,
+    const std::vector<PolyMesh::VertexHandle>& boundary_loop)
+{
+    double length = 0;
+    for (size_t i = 0; i < boundary_loop.size(); i++) {
+        auto next_vertex = boundary_loop[(i + 1) % boundary_loop.size()];
+        length += (mesh->point(next_vertex) - mesh->point(boundary_loop[i])).norm();
+    }
+    return length;
+}
+
+std::vector<double> calculate_boundary_cumulative_lengths_normalized(
+    PolyMesh* mesh,
+    const std::vector<PolyMesh::VertexHandle>& boundary_loop)
+{
+    auto lengths = calculate_boundary_lengths(mesh, boundary_loop);
+    auto total_length = calculate_boundary_length(mesh, boundary_loop);
+    std::vector<double> cumulative_lengths;
+    cumulative_lengths.push_back(0);
+    for (size_t i = 0; i < boundary_loop.size(); i++) {
+        cumulative_lengths.push_back(cumulative_lengths.back() + lengths[i] / total_length);
+    }
+    return cumulative_lengths;
+}
+
+std::vector<PolyMesh::Point> map_to_circle(const std::vector<double>& cumulative_lengths)
+{
+    // map to a unit circle on x-y plane
+    std::vector<PolyMesh::Point> positions;
+    for (double cumulative_length : cumulative_lengths) {
+        auto angle = 2 * M_PI * cumulative_length;
+        positions.emplace_back(std::cos(angle), std::sin(angle), 0);
+    }
+    return positions;
+}
+
+std::vector<PolyMesh::Point> map_to_square(const std::vector<double>& cumulative_lengths)
+{
+    // map to a unit square on x-y plane
+    std::vector<PolyMesh::Point> positions;
+    for (double cumulative_length : cumulative_lengths) {
+        double x, y;
+        if (cumulative_length < 0.25) {
+            x = 1.0;
+            y = 4.0 * cumulative_length;
+        }
+        else if (cumulative_length < 0.5) {
+            x = 1.0 - 4.0 * (cumulative_length - 0.25);
+            y = 1.0;
+        }
+        else if (cumulative_length < 0.75) {
+            x = 0.0;
+            y = 1.0 - 4.0 * (cumulative_length - 0.5);
+        }
+        else {
+            x = 4.0 * (cumulative_length - 0.75);
+            y = 0.0;
+        }
+        positions.emplace_back(x, y, 0);
+    }
+    return positions;
+}
 
 static void node_map_boundary_to_circle_declare(NodeDeclarationBuilder& b)
 {
-    // Input-1: Original 3D mesh with boundary
     b.add_input<decl::Geometry>("Input");
-
-    // Output-1: Processed 3D mesh whose boundary is mapped to a square and the interior vertices
-    // remains the same
     b.add_output<decl::Geometry>("Output");
 }
 
 static void node_map_boundary_to_circle_exec(ExeParams params)
 {
-    // Get the input from params
     auto input = params.get_input<GOperandBase>("Input");
-
-    // (TO BE UPDATED) Avoid processing the node when there is no input
     if (!input.get_component<MeshComponent>()) {
         throw std::runtime_error("Boundary Mapping: Need Geometry Input.");
     }
-    throw std::runtime_error("Not implemented");
 
-    /* ----------------------------- Preprocess -------------------------------
-    ** Create a halfedge structure (using OpenMesh) for the input mesh. The
-    ** half-edge data structure is a widely used data structure in geometric
-    ** processing, offering convenient operations for traversing and modifying
-    ** mesh elements.
-    */
-    auto halfedge_mesh = operand_to_openmesh(&input);
+    auto mesh = operand_to_openmesh(&input);
+    auto n = (long long)mesh->n_vertices();
 
-    /* ----------- [HW4_TODO] TASK 2.1: Boundary Mapping (to circle) ------------
-    ** In this task, you are required to map the boundary of the mesh to a circle
-    ** shape while ensuring the internal vertices remain unaffected. This step is
-    ** crucial for setting up the mesh for subsequent parameterization tasks.
-    **
-    ** Algorithm Pseudocode for Boundary Mapping to Circle
-    ** ------------------------------------------------------------------------
-    ** 1. Identify the boundary loop(s) of the mesh using the half-edge structure.
-    **
-    ** 2. Calculate the total length of the boundary loop to determine the spacing
-    **    between vertices when mapped to a square.
-    **
-    ** 3. Sequentially assign each boundary vertex a new position along the square's
-    **    perimeter, maintaining the calculated spacing to ensure proper distribution.
-    **
-    ** 4. Keep the interior vertices' positions unchanged during this process.
-    **
-    ** Note: How to distribute the points on the circle?
-    **
-    ** Note: It would be better to normalize the boundary to a unit circle in [0,1]x[0,1] for
-    ** texture mapping.
-    */
+    if (n == 0) {
+        throw std::runtime_error("No vertices in the mesh.");
+    }
 
-    /* ----------------------------- Postprocess ------------------------------
-    ** Convert the result mesh from the halfedge structure back to GOperandBase format as the node's
-    ** output.
-    */
-    auto operand_base = openmesh_to_operand(halfedge_mesh.get());
+    auto b = find_boundary_loop(mesh.get());
+    auto cumulative_lengths_n = calculate_boundary_cumulative_lengths_normalized(mesh.get(), b);
+    auto positions = map_to_circle(cumulative_lengths_n);
 
-    auto& output = input;
-    output.get_component<MeshComponent>()->vertices =
-        operand_base->get_component<MeshComponent>()->vertices;
+    auto mesh_new = std::make_unique<PolyMesh>(*mesh);
 
-    // Set the output of the nodes
-    params.set_output("Output", std::move(output));
+    for (size_t i = 0; i < b.size(); i++) {
+        mesh_new->set_point(b[i], positions[i]);
+    }
+
+    auto operand_base = openmesh_to_operand(mesh_new.get());
+    params.set_output("Output", std::move(*operand_base));
 }
-
-/*
-** HW4_TODO: Node to map the mesh boundary to a square.
-*/
 
 static void node_map_boundary_to_square_declare(NodeDeclarationBuilder& b)
 {
-    // Input-1: Original 3D mesh with boundary
     b.add_input<decl::Geometry>("Input");
-
-    // Output-1: Processed 3D mesh whose boundary is mapped to a square and the interior vertices
-    // remains the same
     b.add_output<decl::Geometry>("Output");
 }
 
 static void node_map_boundary_to_square_exec(ExeParams params)
 {
-    // Get the input from params
     auto input = params.get_input<GOperandBase>("Input");
-
-    // (TO BE UPDATED) Avoid processing the node when there is no input
     if (!input.get_component<MeshComponent>()) {
         throw std::runtime_error("Input does not contain a mesh");
     }
-    throw std::runtime_error("Not implemented");
 
-    /* ----------------------------- Preprocess -------------------------------
-    ** Create a halfedge structure (using OpenMesh) for the input mesh.
-    */
-    auto halfedge_mesh = operand_to_openmesh(&input);
+    auto mesh = operand_to_openmesh(&input);
+    auto n = (long long)mesh->n_vertices();
 
-    /* ----------- [HW4_TODO] TASK 2.2: Boundary Mapping (to square) ------------
-    ** In this task, you are required to map the boundary of the mesh to a circle
-    ** shape while ensuring the internal vertices remain unaffected.
-    **
-    ** Algorithm Pseudocode for Boundary Mapping to Square
-    ** ------------------------------------------------------------------------
-    ** (omitted)
-    **
-    ** Note: Can you perserve the 4 corners of the square after boundary mapping?
-    **
-    ** Note: It would be better to normalize the boundary to a unit circle in [0,1]x[0,1] for
-    ** texture mapping.
-    */
+    if (n == 0) {
+        throw std::runtime_error("No vertices in the mesh.");
+    }
 
-    /* ----------------------------- Postprocess ------------------------------
-    ** Convert the result mesh from the halfedge structure back to GOperandBase format as the node's
-    ** output.
-    */
-    auto operand_base = openmesh_to_operand(halfedge_mesh.get());
+    auto b = find_boundary_loop(mesh.get());
+    auto cumulative_lengths_n = calculate_boundary_cumulative_lengths_normalized(mesh.get(), b);
+    auto positions = map_to_square(cumulative_lengths_n);
 
-    // Set the output of the nodes
+    auto mesh_new = std::make_unique<PolyMesh>(*mesh);
+
+    for (size_t i = 0; i < b.size(); i++) {
+        mesh_new->set_point(b[i], positions[i]);
+    }
+
+    auto operand_base = openmesh_to_operand(mesh_new.get());
     params.set_output("Output", std::move(*operand_base));
 }
 
@@ -153,7 +182,7 @@ static void node_register()
 {
     static NodeTypeInfo ntype_square, ntype_circle;
 
-    strcpy(ntype_square.ui_name, "Map Boundary to Square");
+    strcpy_s(ntype_square.ui_name, "Map Boundary to Square");
     strcpy_s(ntype_square.id_name, "geom_map_boundary_to_square");
 
     geo_node_type_base(&ntype_square);
@@ -161,7 +190,7 @@ static void node_register()
     ntype_square.declare = node_map_boundary_to_square_declare;
     nodeRegisterType(&ntype_square);
 
-    strcpy(ntype_circle.ui_name, "Map Boundary to Circle");
+    strcpy_s(ntype_circle.ui_name, "Map Boundary to Circle");
     strcpy_s(ntype_circle.id_name, "geom_map_boundary_to_circle");
 
     geo_node_type_base(&ntype_circle);
