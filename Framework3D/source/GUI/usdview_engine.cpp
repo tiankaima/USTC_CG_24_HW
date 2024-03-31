@@ -122,9 +122,11 @@ void UsdviewEngineImpl::OnFrame(float delta_time)
     renderer_->Render(root, _renderParams);
 
     auto texture = renderer_->GetAovTexture(HdAovTokens->color)->GetRawResource();
+    ImGui::BeginChild(
+        "Render View Port", ImGui::GetContentRegionAvail(), 0, ImGuiWindowFlags_NoMove);
     ImGui::Image(ImTextureID(texture), ImGui::GetContentRegionAvail());
-
     is_active_ = ImGui::IsWindowFocused();
+    ImGui::EndChild();
 
     is_hovered_ = ImGui::IsItemHovered();
 }
@@ -192,7 +194,9 @@ void UsdviewEngine::render()
 
     impl_->OnResize(size.x, size.y);
 
-    impl_->OnFrame(delta_time);
+    if (size.x > 0 && size.y > 0) {
+        impl_->OnFrame(delta_time);
+    }
 
     ImGui::End();
 }
