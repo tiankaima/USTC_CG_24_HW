@@ -23,7 +23,7 @@ static void node_min_surf_exec(ExeParams params)
 {
     auto input = params.get_input<GOperandBase>("Input");
     if (!input.get_component<MeshComponent>()) {
-        throw std::runtime_error("Minimal Surface: Need Geometry Input.");
+        throw std::runtime_error("Need Geometry Input.");
     }
 
     auto mesh = operand_to_openmesh(&input);
