@@ -4,7 +4,7 @@
 #include <pxr/usd/usdShade/material.h>
 #include <pxr/usd/usdShade/materialBindingAPI.h>
 
-#include "GCore/GlobalUsdStage.h"
+#include "Nodes/GlobalUsdStage.h"
 #include "GCore/Components/MaterialComponent.h"
 #include "GCore/Components/MeshOperand.h"
 #include "Nodes/node.hpp"
@@ -36,7 +36,7 @@ static void node_exec(ExeParams params)
         time = pxr::UsdTimeCode::Default();
     }
 
-    auto stage = pxr::UsdStage::Open(file_name);
+    auto stage = pxr::UsdStage::Open(file_name.c_str());
 
     if (stage) {
         // Here 'c_str' call is necessary since prim_path

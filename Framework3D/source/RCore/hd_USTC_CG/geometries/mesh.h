@@ -32,7 +32,8 @@
 #include "pxr/imaging/hd/mesh.h"
 #include "pxr/imaging/hd/vertexAdjacency.h"
 
-PXR_NAMESPACE_OPEN_SCOPE
+USTC_CG_NAMESPACE_OPEN_SCOPE
+using namespace pxr;
 /// \class Hd_USTC_CG_Mesh
 ///
 /// This class is an example of a Hydra Rprim, or renderable object, and it
@@ -62,7 +63,7 @@ public:
     Hd_USTC_CG_Mesh(const SdfPath& id);
 
     /// Hd_USTC_CG_Mesh destructor.
-    ~Hd_USTC_CG_Mesh() override = default;
+    ~Hd_USTC_CG_Mesh() override;
 
     /// Inform the scene graph which state needs to be downloaded in the
     /// first Sync() call: in this case, topology and points data to build
@@ -75,35 +76,13 @@ public:
         HdInterpolation interpolation,
         bool refined);
 
-    /// Pull invalidated scene data and prepare/update the renderable
-    /// representation.
-    ///
-    /// This function is told which scene data to pull through the
-    /// dirtyBits parameter. The first time it's called, dirtyBits comes
-    /// from _GetInitialDirtyBits(), which provides initial dirty state,
-    /// but after that it's driven by invalidation tracking in the scene
-    /// delegate.
-    ///
-    /// The contract for this function is that the prim can only pull on scene
-    /// delegate buffers that are marked dirty. Scene delegates can and do
-    /// implement just-in-time data schemes that mean that pulling on clean
-    /// data will be at best incorrect, and at worst a crash.
-    ///
-    /// This function is called in parallel from worker threads, so it needs
-    /// to be threadsafe; calls into HdSceneDelegate are ok.
-    ///
-    /// Reprs are used by hydra for controlling per-item draw settings like
-    /// flat/smooth shaded, wireframe, refined, etc.
-    ///   \param sceneDelegate The data source for this geometry item.
-    ///   \param renderParam State.
-    ///   \param dirtyBits A specifier for which scene data has changed.
-    ///   \param reprToken A specifier for which representation to draw with.
-    ///
     void Sync(
         HdSceneDelegate* sceneDelegate,
         HdRenderParam* renderParam,
         HdDirtyBits* dirtyBits,
         const TfToken& reprToken) override;
+
+    void Finalize(HdRenderParam* renderParam) override;
 
 protected:
     // Initialize the given representation of this Rprim.
@@ -198,7 +177,7 @@ private:
     RTCGeometry _geometry;
     bool _normalsValid;
     Hd_VertexAdjacency _adjacency;
-    VtVec3fArray _computedNormals;
+    VtVec3fArray computedNormals;
 
     bool _adjacencyValid;
     bool _refined;
@@ -222,6 +201,6 @@ private:
     TfHashMap<TfToken, PrimvarSource, TfToken::HashFunctor> _primvarSourceMap;
 };
 
-PXR_NAMESPACE_CLOSE_SCOPE
+USTC_CG_NAMESPACE_CLOSE_SCOPE
 
 #endif // EXTRAS_IMAGING_EXAMPLES_HD_TINY_MESH_H

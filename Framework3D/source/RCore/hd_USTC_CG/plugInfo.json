@@ -8,7 +8,7 @@
                             "HdRendererPlugin"
                         ],
                         "displayName": "USTC_CG",
-                        "priority": 99
+                        "priority": 2
                     }
                 }
             },

@@ -1,9 +1,7 @@
 // My resharper is not working well with the _MSC_VER_ macro.
 #include "GUI/usdview_engine.h"
 
-#include <cmath>
-
-#include "GCore/GlobalUsdStage.h"
+#include "Nodes/GlobalUsdStage.h"
 #include "free_camera.h"
 #include "imgui.h"
 #include "pxr/base/gf/camera.h"
@@ -14,6 +12,7 @@
 #include "pxr/usdImaging/usdImagingGL/engine.h"
 
 USTC_CG_NAMESPACE_OPEN_SCOPE
+class NodeTree;
 using namespace pxr;
 
 class UsdviewEngineImpl {
@@ -21,27 +20,34 @@ class UsdviewEngineImpl {
     enum class CamType { First, Third };
     struct Status {
         CamType cam_type = CamType::Third;  // 0 for 1st personal, 1 for 3rd personal
+        unsigned renderer_id = 1;           // 0 for 1st personal, 1 for 3rd personal
     } engine_status;
+
     UsdviewEngineImpl(pxr::UsdStageRefPtr stage)
     {
+        GarchGLApiLoad();
+        glGenFramebuffers(1, &fbo);
+
         renderer_ = std::make_unique<UsdImagingGLEngine>();
         renderer_->SetEnablePresentation(true);
         free_camera_ = std::make_unique<ThirdPersonCamera>();
 
         auto plugins = renderer_->GetRendererPlugins();
-        renderer_->SetRendererPlugin(plugins[0]);
-
-        GfCamera::Projection proj = GfCamera::Projection::Perspective;
-        free_camera_->SetProjection(proj);
-
+        renderer_->SetRendererPlugin(plugins[engine_status.renderer_id]);
+        free_camera_->SetProjection(GfCamera::Projection::Perspective);
         free_camera_->SetClippingRange(pxr::GfRange1f{ 0.1f, 1000.f });
     }
 
     void DrawMenuBar();
-    void OnFrame(float delta_time);
+    void OnFrame(float delta_time, NodeTree* node_tree);
+    void OnFrame(float delta_time, NodeTree* node_tree, NodeTreeExecutor* executor);
+    void refresh_platform_texture();
+    void refresh_viewport(int x, int y);
     void OnResize(int x, int y);
 
    private:
+    unsigned fbo = 0;
+    unsigned tex = 0;
     std::unique_ptr<FreeCamera> free_camera_;
     bool is_hovered_ = false;
     std::unique_ptr<UsdImagingGLEngine> renderer_;
@@ -74,10 +80,32 @@ void UsdviewEngineImpl::DrawMenuBar()
         }
         ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("Renderer")) {
+        if (ImGui::BeginMenu("Select Renderer")) {
+            auto available_renderers = renderer_->GetRendererPlugins();
+            for (unsigned i = 0; i < available_renderers.size(); ++i) {
+                if (ImGui::MenuItem(
+                        available_renderers[i].GetText(),
+                        0,
+                        this->engine_status.renderer_id == i)) {
+                    if (this->engine_status.renderer_id != i) {
+                        renderer_->SetRendererPlugin(available_renderers[i]);
+
+                        // Perform a fake resize event
+                        refresh_viewport(renderBufferSize_[0], renderBufferSize_[1]);
+                        this->engine_status.renderer_id = i;
+                    }
+                }
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenu();
+    }
+
     ImGui::EndMenuBar();
 }
 
-void UsdviewEngineImpl::OnFrame(float delta_time)
+void UsdviewEngineImpl::OnFrame(float delta_time, NodeTree* node_tree, NodeTreeExecutor* executor)
 {
     DrawMenuBar();
     // Update the camera when mouse is in the subwindow
@@ -90,6 +118,8 @@ void UsdviewEngineImpl::OnFrame(float delta_time)
 
     renderer_->SetCameraState(viewMatrix, projectionMatrix);
     renderer_->SetRendererAov(HdAovTokens->color);
+    renderer_->SetRendererSetting(TfToken("RenderNodeTree"), VtValue((void*)node_tree));
+    renderer_->SetRendererSetting(TfToken("RenderNodeTreeExecutor"), VtValue((void*)executor));
 
     _renderParams.enableLighting = true;
     _renderParams.enableSceneMaterials = true;
@@ -97,7 +127,7 @@ void UsdviewEngineImpl::OnFrame(float delta_time)
     _renderParams.frame = UsdTimeCode::Default();
     _renderParams.drawMode = UsdImagingGLDrawMode::DRAW_WIREFRAME_ON_SURFACE;
 
-    _renderParams.clearColor = GfVec4f(0.2f, 0.2f, 0.2f, 1.f);
+    _renderParams.clearColor = GfVec4f(0.4f, 0.4f, 0.4f, 1.f);
 
     for (int i = 0; i < free_camera_->GetClippingPlanes().size(); ++i) {
         _renderParams.clipPlanes[i] = free_camera_->GetClippingPlanes()[i];
@@ -121,28 +151,63 @@ void UsdviewEngineImpl::OnFrame(float delta_time)
     UsdPrim root = GlobalUsdStage::global_usd_stage->GetPseudoRoot();
     renderer_->Render(root, _renderParams);
 
-    auto texture = renderer_->GetAovTexture(HdAovTokens->color)->GetRawResource();
-    ImGui::BeginChild(
-        "Render View Port", ImGui::GetContentRegionAvail(), 0, ImGuiWindowFlags_NoMove);
-    ImGui::Image(ImTextureID(texture), ImGui::GetContentRegionAvail());
-    is_active_ = ImGui::IsWindowFocused();
-    ImGui::EndChild();
+    renderer_->SetPresentationOutput(pxr::TfToken("OpenGL"), pxr::VtValue(fbo));
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    ImGui::BeginChild("ViewPort", ImGui::GetContentRegionAvail(), 0, ImGuiWindowFlags_NoMove);
+    ImGui::Image(
+        ImTextureID(tex), ImGui::GetContentRegionAvail(), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+    is_active_ = ImGui::IsWindowFocused();
     is_hovered_ = ImGui::IsItemHovered();
+    ImGui::EndChild();
+}
+
+void UsdviewEngineImpl::refresh_platform_texture()
+{
+    if (tex) {
+        glDeleteTextures(1, &tex);
+    }
+    glGenTextures(1, &tex);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA8,
+        renderBufferSize_[0],
+        renderBufferSize_[1],
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void UsdviewEngineImpl::refresh_viewport(int x, int y)
+{
+    renderBufferSize_[0] = x;
+    renderBufferSize_[1] = y;
+
+    renderer_->SetRenderBufferSize(renderBufferSize_);
+    renderer_->SetRenderViewport(
+        GfVec4d{ 0.0, 0.0, double(renderBufferSize_[0]), double(renderBufferSize_[1]) });
+    free_camera_->m_ViewportSize = renderBufferSize_;
+
+    refresh_platform_texture();
 }
 
 void UsdviewEngineImpl::OnResize(int x, int y)
 {
-    renderBufferSize_[0] = x;
-    renderBufferSize_[1] = y;
-    renderer_->SetRenderBufferSize(renderBufferSize_);
-    renderer_->SetRenderViewport(
-        GfVec4d{ 0.0, 0.0, double(renderBufferSize_[0]), double(renderBufferSize_[1]) });
-
-    GfCamera::Projection proj = GfCamera::Projection::Perspective;
-    free_camera_->SetProjection(proj);
-
-    free_camera_->m_ViewportSize = renderBufferSize_;
+    if (renderBufferSize_[0] != x || renderBufferSize_[1] != y) {
+        refresh_viewport(x, y);
+    }
 }
 
 bool UsdviewEngineImpl::CameraCallback(float delta_time)
@@ -184,20 +249,26 @@ UsdviewEngine::~UsdviewEngine()
 {
 }
 
-void UsdviewEngine::render()
+void UsdviewEngine::render(NodeTree* node_tree, NodeTreeExecutor* get_executor)
 {
     auto delta_time = ImGui::GetIO().DeltaTime;
 
-    ImGui::SetNextWindowSize({ 800, 600 });
-    ImGui::Begin("UsdView Engine", nullptr, ImGuiWindowFlags_MenuBar);
-    auto size = ImGui::GetContentRegionAvail();
+    // ImGui::SetNextWindowSize({ 800, 600 });
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-    impl_->OnResize(size.x, size.y);
+    if (ImGui::Begin(
+            "UsdView Engine", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoCollapse)) {
+        ImGui::PopStyleVar(1);
 
-    if (size.x > 0 && size.y > 0) {
-        impl_->OnFrame(delta_time);
+        auto size = ImGui::GetContentRegionAvail();
+
+        impl_->OnResize(size.x, size.y);
+
+        impl_->OnFrame(delta_time, node_tree, get_executor);
     }
-
+    else {
+        ImGui::PopStyleVar(1);
+    }
     ImGui::End();
 }
 

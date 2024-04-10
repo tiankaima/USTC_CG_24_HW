@@ -5,7 +5,6 @@
 #include "node_exec.hpp"
 #include "pin.hpp"
 
-
 USTC_CG_NAMESPACE_OPEN_SCOPE
 class Operator;
 
@@ -32,12 +31,16 @@ struct NodeLink {
 using ExecFunction = void (*)(ExeParams params);
 using NodeDeclareFunction = void (*)(NodeDeclarationBuilder& builder);
 
+enum class NodeTypeOfGrpah { Geometry, Function, Render, Composition };
+
 // There can be many instances of nodes, while each of them has a type. The
 // templates should be declared statically. It contains the information of the
 // type of input and output.
 struct NodeTypeInfo {
     char id_name[64];
     char ui_name[64];
+
+    NodeTypeOfGrpah node_type_of_grpah;
 
     float color[4];
     NodeDeclareFunction declare;
@@ -84,7 +87,10 @@ struct Node {
 
 void nodeRegisterType(NodeTypeInfo* type_info);
 
-const std::map<std::string, NodeTypeInfo*>& get_node_registry();
+const std::map<std::string, NodeTypeInfo*>& get_geo_node_registry();
+const std::map<std::string, NodeTypeInfo*>& get_render_node_registry();
+const std::map<std::string, NodeTypeInfo*>& get_func_node_registry();
+const std::map<std::string, NodeTypeInfo*>& get_composition_node_registry();
 
 NodeSocket* nodeAddSocket(
     NodeTree* ntree,

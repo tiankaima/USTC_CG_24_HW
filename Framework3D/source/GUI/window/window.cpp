@@ -20,8 +20,7 @@ Window::Window(const std::string& window_name) : name_(window_name)
         throw std::runtime_error("Failed to initialize GLFW!");
     }
 
-    window_ =
-        glfwCreateWindow(width_, height_, name_.c_str(), nullptr, nullptr);
+    window_ = glfwCreateWindow(width_, height_, name_.c_str(), nullptr, nullptr);
     if (window_ == nullptr) {
         glfwTerminate();  // Ensure GLFW is cleaned up before throwing
         throw std::runtime_error("Failed to create GLFW window!");
@@ -66,58 +65,23 @@ void Window::run()
     }
 }
 
-void Window::createDockSpace(unsigned dock_id)
-{
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
-
-    ImGui::SetNextWindowPos(viewport->WorkPos);
-    ImGui::SetNextWindowSize(viewport->WorkSize);
-    ImGui::SetNextWindowViewport(viewport->ID);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus |
-                    ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-    ImGui::Begin(
-        ("DockSpace" + std::to_string(dock_id)).c_str(), 0, window_flags);
-    ImGui::PopStyleVar(3);
-
-    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-
-    ImGui::DockSpace(
-        dockspace_id,
-        ImVec2(0.0f, 0.0f),
-        ImGuiDockNodeFlags_PassthruCentralNode);
-}
-
-void Window::finishDockSpace()
-{
-    ImGui::End();
-}
-
 void Window::BuildUI()
 {
-    createDockSpace(0);
     ImGui::ShowDemoWindow();
-    finishDockSpace();
 }
 
 bool Window::init_glfw()
 {
-    glfwSetErrorCallback([](int error, const char* desc) {
-        fprintf(stderr, "GLFW Error %d: %s\n", error, desc);
-    });
+    glfwSetErrorCallback(
+        [](int error, const char* desc) { fprintf(stderr, "GLFW Error %d: %s\n", error, desc); });
 
     if (!glfwInit()) {
         return false;
     }
 
 #ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
@@ -139,13 +103,19 @@ bool Window::init_gui()
     //  - fontsize
     float xscale, yscale;
     glfwGetWindowContentScale(window_, &xscale, &yscale);
-    io.FontGlobalScale = xscale;
     // - style
     ImGui::StyleColorsDark();
 
-    ImGui_ImplGlfw_InitForOpenGL(window_, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
+    io.DisplayFramebufferScale.x = xscale;
+    io.DisplayFramebufferScale.x = yscale;
 
+    ImGui_ImplGlfw_InitForOpenGL(window_, true);
+#ifdef __APPLE__
+    ImGui_ImplOpenGL3_Init("#version 410");
+#else
+    io.FontGlobalScale = xscale;
+    ImGui_ImplOpenGL3_Init("#version 130");
+#endif
     return true;
 }
 
@@ -155,8 +125,30 @@ void Window::render()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    BuildUI();
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+    ImGui::Begin(("DockSpace" + std::to_string(0)).c_str(), 0, window_flags);
+    ImGui::PopStyleVar(3);
+    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+
     Render();
+    BuildUI();
+
+    ImGui::End();
 
     ImGui::Render();
 

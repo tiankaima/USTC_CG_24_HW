@@ -1,12 +1,15 @@
+#include "Nodes/all_socket_types.hpp"
 #include "Nodes/node.hpp"
 #include "Nodes/node_register.h"
+#include "RCore/Backend.hpp"
 #include "USTC_CG.h"
-
+#include "Utils/Macro/map.h"
+#include "rich_type_buffer.hpp"
 USTC_CG_NAMESPACE_OPEN_SCOPE
 static void reset_declaration(NodeDeclaration& declaration)
 {
     std::destroy_at(&declaration);
-    new(&declaration) NodeDeclaration();
+    new (&declaration) NodeDeclaration();
 }
 
 void build_node_declaration(
@@ -21,37 +24,72 @@ void build_node_declaration(
     node_decl_builder.finalize();
 }
 
-static std::map<std::string, NodeTypeInfo*> node_registry;
+static std::map<std::string, NodeTypeInfo*> geo_node_registry;
 
-const std::map<std::string, NodeTypeInfo*>& get_node_registry()
+const std::map<std::string, NodeTypeInfo*>& get_geo_node_registry()
 {
-    return node_registry;
+    return geo_node_registry;
+}
+
+static std::map<std::string, NodeTypeInfo*> render_node_registry;
+
+const std::map<std::string, NodeTypeInfo*>& get_render_node_registry()
+{
+    return render_node_registry;
+}
+
+static std::map<std::string, NodeTypeInfo*> func_node_registry;
+
+const std::map<std::string, NodeTypeInfo*>& get_func_node_registry()
+{
+    return func_node_registry;
+}
+
+static std::map<std::string, NodeTypeInfo*> composition_node_registry;
+
+const std::map<std::string, NodeTypeInfo*>& get_composition_node_registry()
+{
+    return composition_node_registry;
 }
 
 void nodeRegisterType(NodeTypeInfo* type_info)
 {
-    node_registry[type_info->id_name] = type_info;
+    switch (type_info->node_type_of_grpah) {
+        case NodeTypeOfGrpah::Geometry: geo_node_registry[type_info->id_name] = type_info; break;
+        case NodeTypeOfGrpah::Render: render_node_registry[type_info->id_name] = type_info; break;
+        case NodeTypeOfGrpah::Function: func_node_registry[type_info->id_name] = type_info; break;
+        case NodeTypeOfGrpah::Composition:
+            composition_node_registry[type_info->id_name] = type_info;
+            break;
+        default: logging("Unknown graph type of node.", Error);
+    }
+
     if (type_info->declare) {
         type_info->static_declaration = std::make_unique<NodeDeclaration>();
     }
-    build_node_declaration(
-        *type_info,
-        *type_info->static_declaration,
-        nullptr,
-        nullptr);
+    build_node_declaration(*type_info, *type_info->static_declaration, nullptr, nullptr);
 }
 
 NodeTypeInfo* nodeTypeFind(const char* idname)
 {
     if (idname[0]) {
-        auto& registry = get_node_registry();
-        NodeTypeInfo* nt = registry.at(std::string(idname));
-        if (nt) {
-            return nt;
-        }
-    }
+        NodeTypeInfo* nt;
 
-    return nullptr;
+        auto find_type = [idname, &nt](const std::map<std::string, NodeTypeInfo*>& node_registry) {
+            if (node_registry.find(std::string(idname)) != node_registry.end()) {
+                nt = node_registry.at(std::string(idname));
+            }
+        };
+
+        find_type(get_geo_node_registry());
+        find_type(get_render_node_registry());
+        find_type(get_func_node_registry());
+        find_type(get_composition_node_registry());
+
+        if (nt)
+            return nt;
+    }
+    throw std::runtime_error("Id name not found.");
 }
 
 static std::map<std::string, std::unique_ptr<SocketTypeInfo>> socket_registry;
@@ -69,23 +107,13 @@ SocketTypeInfo* socketTypeFind(const char* idname)
     return nullptr;
 }
 
+#define TYPE_NAME(CASE) \
+    case SocketType::CASE: return "Socket" #CASE;
+
 const char* get_socket_typename(SocketType socket)
 {
-#define GetTypeName(Type, Size) \
-    case SocketType::Type##Size##Buffer: return "Socket" #Type #Size "Buffer";
     switch (socket) {
-        case SocketType::Geometry: return "SocketGeometry";
-        case SocketType::Int: return "SocketInt";
-        case SocketType::Float: return "SocketFloat";
-        case SocketType::String: return "SocketString";
-        GetTypeName(Float, 1);
-        GetTypeName(Float, 2);
-        GetTypeName(Float, 3);
-        GetTypeName(Float, 4);
-        GetTypeName(Int, 1);
-        GetTypeName(Int, 2);
-        GetTypeName(Int, 3);
-        GetTypeName(Int, 4);
+        MACRO_MAP(TYPE_NAME, ALL_SOCKET_TYPES)
         default: return "";
     }
 }
@@ -98,75 +126,109 @@ SocketTypeInfo* make_standard_socket_type(SocketType socket)
     return type_info;
 }
 
-static SocketTypeInfo* make_socket_type_int()
+#define MakeType(Type, Item, Size, Buffer)                                                    \
+    static SocketTypeInfo* make_socket_type_##Type##Size##Buffer()                            \
+    {                                                                                         \
+        SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Type##Size##Buffer); \
+        socktype->cpp_type = &CPPType::get<pxr::VtArray<Item>>();                             \
+        return socktype;                                                                      \
+    }
+
+MakeType(Float, float, 1, Buffer);
+MakeType(Float, pxr::GfVec2f, 2, Buffer);
+MakeType(Float, pxr::GfVec3f, 3, Buffer);
+MakeType(Float, pxr::GfVec4f, 4, Buffer);
+MakeType(Int, int, 1, Buffer);
+MakeType(Int, pxr::GfVec2i, 2, Buffer);
+MakeType(Int, pxr::GfVec3i, 3, Buffer);
+MakeType(Int, pxr::GfVec4i, 4, Buffer);
+MakeType(Float, pxr::GfVec2f, 2);
+MakeType(Float, pxr::GfVec3f, 3);
+MakeType(Float, pxr::GfVec4f, 4);
+MakeType(Int, pxr::GfVec2i, 2);
+MakeType(Int, pxr::GfVec3i, 3);
+MakeType(Int, pxr::GfVec4i, 4);
+#undef MakeTypeBuffer
+
+static SocketTypeInfo* make_socket_type_Int()
 {
     SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Int);
     socktype->cpp_type = &CPPType::get<int>();
     return socktype;
 }
 
-static SocketTypeInfo* make_socket_type_float()
+static SocketTypeInfo* make_socket_type_Float()
 {
     SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Float);
     socktype->cpp_type = &CPPType::get<float>();
     return socktype;
 }
 
-static SocketTypeInfo* make_socket_type_string()
+static SocketTypeInfo* make_socket_type_String()
 {
     SocketTypeInfo* socktype = make_standard_socket_type(SocketType::String);
     socktype->cpp_type = &CPPType::get<std::string>();
     return socktype;
 }
-
-#define MakeTypeBuffer(Type, Item, Size)                               \
-    static SocketTypeInfo* make_socket_type_##Type##Size##_buffer()    \
-    {                                                                  \
-        SocketTypeInfo* socktype =                                     \
-            make_standard_socket_type(SocketType::Type##Size##Buffer); \
-        socktype->cpp_type = &CPPType::get<pxr::VtArray<Item>>();      \
-        return socktype;                                               \
-    }
-
-MakeTypeBuffer(Float, float, 1);
-MakeTypeBuffer(Float, pxr::GfVec2f, 2);
-MakeTypeBuffer(Float, pxr::GfVec3f, 3);
-MakeTypeBuffer(Float, pxr::GfVec4f, 4);
-
-MakeTypeBuffer(Int, int, 1);
-MakeTypeBuffer(Int, pxr::GfVec2i, 2);
-MakeTypeBuffer(Int, pxr::GfVec3i, 3);
-MakeTypeBuffer(Int, pxr::GfVec4i, 4);
-
-#undef MakeTypeBuffer
-
-static SocketTypeInfo* make_socket_type_geometry()
+static SocketTypeInfo* make_socket_type_Geometry()
 {
     SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Geometry);
     socktype->cpp_type = &CPPType::get<GOperandBase>();
     return socktype;
 }
 
+static SocketTypeInfo* make_socket_type_Lights()
+{
+    SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Lights);
+    socktype->cpp_type = &CPPType::get<LightArray>();
+    return socktype;
+}
+
+static SocketTypeInfo* make_socket_type_Layer()
+{
+    SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Layer);
+    socktype->cpp_type = &CPPType::get<pxr::UsdStageRefPtr>();
+    return socktype;
+}
+
+static SocketTypeInfo* make_socket_type_Camera()
+{
+    SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Camera);
+    socktype->cpp_type = &CPPType::get<CameraArray>();
+    return socktype;
+}
+
+static SocketTypeInfo* make_socket_type_Meshes()
+{
+    SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Meshes);
+    socktype->cpp_type = &CPPType::get<MeshArray>();
+    return socktype;
+}
+
+static SocketTypeInfo* make_socket_type_Texture()
+{
+    SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Texture);
+    socktype->cpp_type = &CPPType::get<TextureHandle>();
+    return socktype;
+}
+
+static SocketTypeInfo* make_socket_type_Materials()
+{
+    SocketTypeInfo* socktype = make_standard_socket_type(SocketType::Materials);
+    socktype->cpp_type = &CPPType::get<MaterialMap>();
+    return socktype;
+}
+
 void register_socket(SocketTypeInfo* type_info)
 {
-    socket_registry[type_info->type_name] =
-        std::unique_ptr<SocketTypeInfo>(type_info);
+    socket_registry[type_info->type_name] = std::unique_ptr<SocketTypeInfo>(type_info);
 }
 
 void register_sockets()
 {
-    register_socket(make_socket_type_int());
-    register_socket(make_socket_type_float());
-    register_socket(make_socket_type_Float1_buffer());
-    register_socket(make_socket_type_Float2_buffer());
-    register_socket(make_socket_type_Float3_buffer());
-    register_socket(make_socket_type_Float4_buffer());
-    register_socket(make_socket_type_Int1_buffer());
-    register_socket(make_socket_type_Int2_buffer());
-    register_socket(make_socket_type_Int3_buffer());
-    register_socket(make_socket_type_Int4_buffer());
-    register_socket(make_socket_type_string());
-    register_socket(make_socket_type_geometry());
+#define REGISTER_NODE(NAME) register_socket(make_socket_type_##NAME());
+
+    MACRO_MAP(REGISTER_NODE, ALL_SOCKET_TYPES)
 }
 
 void register_all()

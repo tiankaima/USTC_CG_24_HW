@@ -19,9 +19,10 @@
 #include <fstream>
 #include <iostream>
 
-#include "GCore/GlobalUsdStage.h"
+#include "Nodes/GlobalUsdStage.h"
 #include "Nodes/id.hpp"
 #include "Nodes/node.hpp"
+#include "Nodes/node_exec_eager.hpp"
 #include "Nodes/pin.hpp"
 #include "Utils/json.hpp"
 #include "imgui_impl_opengl3_loader.h"
@@ -50,8 +51,6 @@ namespace util = ax::NodeEditor::Utilities;
 using namespace ax;
 
 using ax::Widgets::IconType;
-
-static ed::EditorContext* m_Editor = nullptr;
 
 struct NodeIdLess {
     bool operator()(const NodeId& lhs, const NodeId& rhs) const
@@ -93,6 +92,13 @@ static bool Splitter(
 }
 
 struct NodeSystemImpl {
+    friend class NodeSystem;
+    explicit NodeSystemImpl(NodeSystemType type, const std::string& filename)
+        : node_system_type(type),
+          filename(filename)
+    {
+    }
+
     Node* SpawnComment();
 
     void OnStart();
@@ -106,6 +112,7 @@ struct NodeSystemImpl {
     static void DrawPinIcon(const NodeSocket& pin, bool connected, int alpha);
 
    protected:
+    size_t frame = 0;
     void TouchNode(NodeId id);
     float GetTouchProgress(NodeId id);
     void UpdateTouch();
@@ -113,14 +120,17 @@ struct NodeSystemImpl {
     bool CanCreateLink(NodeSocket* a, NodeSocket* b);
 
     std::unique_ptr<NodeSystemExecution> node_system_execution_;
-    static const int m_PinIconSize = 24;
+    static const int m_PinIconSize = 20;
     // std::vector<Node*> m_Nodes;
     ImTextureID m_HeaderBackground = nullptr;
     const float m_TouchTime = 1.0f;
     std::map<NodeId, float, NodeIdLess> m_NodeTouchTime;
-    bool m_ShowOrdinals = false;
+    std::string filename;
 
    private:
+    ed::EditorContext* m_Editor = nullptr;
+    const NodeSystemType node_system_type;
+
     ImTextureID LoadTexture(const unsigned char* data, size_t buffer_size);
 
     struct ImTexture {
@@ -152,19 +162,28 @@ Node* NodeSystemImpl::SpawnComment()
 
 void NodeSystemImpl::OnStart()
 {
-    node_system_execution_ = std::make_unique<NodeSystemExecution>();
+    if (node_system_type == NodeSystemType::Geometry) {
+        node_system_execution_ = std::make_unique<GeoNodeSystemExecution>();
+    }
+    else if (node_system_type == NodeSystemType::Render) {
+        node_system_execution_ = std::make_unique<RenderNodeSystemExecution>();
+        node_system_execution_->executor = CreateEagerNodeTreeExecutorRender();
+    }
+    else if (node_system_type == NodeSystemType::Composition) {
+        node_system_execution_ = std::make_unique<CompositionNodeSystemExecution>();
+    }
 
     ed::Config config;
 
-    config.UserPointer = node_system_execution_.get();
+    config.UserPointer = this;
 
     config.SaveSettings = [](const char* data,
                              size_t size,
                              NodeEditor::SaveReasonFlags reason,
                              void* userPointer) -> bool {
-        auto ptr = static_cast<NodeSystemExecution*>(userPointer);
+        auto ptr = static_cast<NodeSystemImpl*>(userPointer);
         std::ofstream file(ptr->filename);
-        auto node_serialize = ptr->Serialize();
+        auto node_serialize = ptr->node_system_execution_->Serialize();
 
         node_serialize.erase(node_serialize.end() - 1);
 
@@ -178,7 +197,7 @@ void NodeSystemImpl::OnStart()
     };
 
     config.LoadSettings = [](char* d, void* userPointer) -> size_t {
-        auto ptr = static_cast<NodeSystemExecution*>(userPointer);
+        auto ptr = static_cast<NodeSystemImpl*>(userPointer);
         std::ifstream file(ptr->filename);
         if (!file) {
             return 0;
@@ -197,7 +216,7 @@ void NodeSystemImpl::OnStart()
         data.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
         if (data.size() > 0) {
-            ptr->Deserialize(data);
+            ptr->node_system_execution_->Deserialize(data);
         }
 
         memcpy(d, data.data(), data.size());
@@ -206,9 +225,6 @@ void NodeSystemImpl::OnStart()
     };
 
     m_Editor = ed::CreateEditor(&config);
-    ed::SetCurrentEditor(m_Editor);
-
-    ed::NavigateToContent();
 
     m_HeaderBackground = LoadTexture(BlueprintBackground, sizeof(BlueprintBackground));
 }
@@ -267,11 +283,14 @@ bool NodeSystemImpl::draw_socket_controllers(NodeSocket* input)
 
 void NodeSystemImpl::OnFrame(float deltaTime)
 {
-    UpdateTouch();
+    // A very awkward workaround.
+    if (frame == 0) {
+        frame++;
+        return;
+    }
+    frame++;
 
     auto& io = ImGui::GetIO();
-
-    ImGui::Text("FPS: %.2f (%.2gms)", io.Framerate, io.Framerate ? 1000.0f / io.Framerate : 0.0f);
 
     ed::SetCurrentEditor(m_Editor);
 
@@ -282,15 +301,13 @@ void NodeSystemImpl::OnFrame(float deltaTime)
     static NodeSocket* newNodeLinkPin = nullptr;
     static NodeSocket* newLinkPin = nullptr;
 
-    static float leftPaneWidth = 400.0f;
-    static float rightPaneWidth = 800.0f;
-    Splitter(true, 4.0f, &leftPaneWidth, &rightPaneWidth, 50.0f, 50.0f);
+    // ShowLeftPane(leftPaneWidth - 4.0f);
 
-    ShowLeftPane(leftPaneWidth - 4.0f);
+    // ImGui::SameLine(0.0f, 12.0f);
 
-    ImGui::SameLine(0.0f, 12.0f);
-
-    ed::Begin("Node editor");
+    if (ImGui::Button("Zoom to Content"))
+        ed::NavigateToContent();
+    ed::Begin(("Node editor" + filename).c_str());
     {
         auto cursorTopLeft = ImGui::GetCursorScreenPos();
 
@@ -646,51 +663,9 @@ void NodeSystemImpl::OnFrame(float deltaTime)
     auto editorMin = ImGui::GetItemRectMin();
     auto editorMax = ImGui::GetItemRectMax();
 
-    if (m_ShowOrdinals) {
-        int nodeCount = ed::GetNodeCount();
-        std::vector<NodeId> orderedNodeIds;
-        orderedNodeIds.resize(static_cast<size_t>(nodeCount));
-        ed::GetOrderedNodeIds(orderedNodeIds.data(), nodeCount);
-
-        auto drawList = ImGui::GetWindowDrawList();
-        drawList->PushClipRect(editorMin, editorMax);
-
-        int ordinal = 0;
-        for (auto& nodeId : orderedNodeIds) {
-            auto p0 = ed::GetNodePosition(nodeId);
-            auto p1 = p0 + ed::GetNodeSize(nodeId);
-            p0 = ed::CanvasToScreen(p0);
-            p1 = ed::CanvasToScreen(p1);
-
-            ImGuiTextBuffer builder;
-            builder.appendf("#%d", ordinal++);
-
-            auto textSize = ImGui::CalcTextSize(builder.c_str());
-            auto padding = ImVec2(2.0f, 2.0f);
-            auto widgetSize = textSize + padding * 2;
-
-            auto widgetPosition = ImVec2(p1.x, p0.y) + ImVec2(0.0f, -widgetSize.y);
-
-            drawList->AddRectFilled(
-                widgetPosition,
-                widgetPosition + widgetSize,
-                IM_COL32(100, 80, 80, 190),
-                3.0f,
-                ImDrawFlags_RoundCornersAll);
-            drawList->AddRect(
-                widgetPosition,
-                widgetPosition + widgetSize,
-                IM_COL32(200, 160, 160, 190),
-                3.0f,
-                ImDrawFlags_RoundCornersAll);
-            drawList->AddText(
-                widgetPosition + padding, IM_COL32(255, 255, 255, 255), builder.c_str());
-        }
-
-        drawList->PopClipRect();
+    if (node_system_type != NodeSystemType::Render) {
+        node_system_execution_->try_execution();
     }
-
-    node_system_execution_->try_execution();
 }
 
 ImTextureID NodeSystemImpl::LoadTexture(const unsigned char* data, size_t buffer_size)
@@ -802,12 +777,17 @@ bool NodeSystemImpl::CanCreateLink(NodeSocket* a, NodeSocket* b)
 
 inline ImGuiWindowFlags GetWindowFlags()
 {
-    return ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus;
+    return ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse;
 }
 
-NodeSystem::NodeSystem()
+NodeSystem::NodeSystem(
+    NodeSystemType type,
+    const std::string& file_name,
+    const std::string& window_name)
+    : node_system_type(type),
+      window_name(window_name)
 {
-    impl_ = std::make_unique<NodeSystemImpl>();
+    impl_ = std::make_unique<NodeSystemImpl>(type, file_name);
     impl_->OnStart();
 }
 
@@ -820,16 +800,27 @@ void NodeSystem::draw_imgui()
 {
     auto delta_time = ImGui::GetIO().DeltaTime;
 
-    ImGui::Begin("Node System", nullptr, GetWindowFlags());
-
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(3.0f, 3.0f));
+    ImGui::Begin(window_name.c_str(), nullptr, GetWindowFlags());
+    ImGui::PopStyleVar(1);
     impl_->OnFrame(delta_time);
-
     ImGui::End();
+}
+
+NodeTree* NodeSystem::get_tree()
+{
+    return impl_->node_system_execution_->node_tree.get();
+}
+
+NodeTreeExecutor* NodeSystem::get_executor() const
+{
+    return impl_->node_system_execution_->executor.get();
 }
 
 void NodeSystemImpl::ShowLeftPane(float paneWidth)
 {
     auto& io = ImGui::GetIO();
+    ImGui::Text("FPS: %.2f (%.2gms)", io.Framerate, io.Framerate ? 1000.0f / io.Framerate : 0.0f);
 
     ImGui::BeginChild("Selection", ImVec2(paneWidth, 0));
 
@@ -848,7 +839,6 @@ void NodeSystemImpl::ShowLeftPane(float paneWidth)
     if (ImGui::Button("Save"))
         ;
     ImGui::EndHorizontal();
-    ImGui::Checkbox("Show Ordinals", &m_ShowOrdinals);
 
     std::vector<NodeId> selectedNodes;
     std::vector<LinkId> selectedLinks;

@@ -64,26 +64,48 @@ bool EagerNodeTreeExecutor::execute_node(NodeTree* tree, Node* node)
 void EagerNodeTreeExecutor::forward_output_to_input(Node* node)
 {
     for (auto&& output : node->outputs) {
-        for (int i = 0; i < output->directly_linked_sockets.size(); ++i) {
-            auto directly_linked_input_socket = output->directly_linked_sockets[i];
+        if (output->directly_linked_sockets.empty()) {
+            auto& output_state = output_states[index_cache[output]];
+            assert(output_state.is_last_used == false);
+            output_state.is_last_used = true;
+        }
+        else {
+            int last_used_id = -1;
 
-            if (index_cache.find(directly_linked_input_socket) != index_cache.end()) {
-                auto& input_state = input_states[index_cache[directly_linked_input_socket]];
+            for (int i = 0; i < output->directly_linked_sockets.size(); ++i) {
+                auto directly_linked_input_socket = output->directly_linked_sockets[i];
 
-                auto& output_state = output_states[index_cache[output]];
+                if (index_cache.find(directly_linked_input_socket) != index_cache.end()) {
+                    if (directly_linked_input_socket->Node->REQUIRED) {
+                        last_used_id =
+                            std::max(last_used_id, int(index_cache[directly_linked_input_socket]));
+                    }
 
-                auto& cpp_type = *output->type_info->cpp_type;
-                auto is_last_target = i == output->directly_linked_sockets.size() - 1;
+                    auto& input_state = input_states[index_cache[directly_linked_input_socket]];
 
-                auto dst_buffer = input_state.value.get();
-                auto value_to_forward = output_state.value;
-                if (is_last_target) {
-                    cpp_type.move_construct(value_to_forward.get(), dst_buffer);
+                    auto& output_state = output_states[index_cache[output]];
+
+                    auto& cpp_type = *output->type_info->cpp_type;
+                    auto is_last_target = i == output->directly_linked_sockets.size() - 1;
+
+                    auto dst_buffer = input_state.value.get();
+                    auto value_to_forward = output_state.value;
+                    if (is_last_target) {
+                        cpp_type.move_construct(value_to_forward.get(), dst_buffer);
+                    }
+                    else {
+                        cpp_type.copy_construct(value_to_forward.get(), dst_buffer);
+                    }
+                    input_state.is_forwarded = true;
                 }
-                else {
-                    cpp_type.copy_construct(value_to_forward.get(), dst_buffer);
-                }
-                input_state.is_forwarded = true;
+            }
+            if (last_used_id == -1) {
+                output_states[index_cache[output]].is_last_used = true;
+            }
+            else {
+                assert(input_states[last_used_id].is_last_used == false);
+
+                input_states[last_used_id].is_last_used = true;
             }
         }
     }
@@ -144,6 +166,9 @@ void EagerNodeTreeExecutor::compile(NodeTree* tree)
         std::stable_partition(nodes_to_execute.begin(), nodes_to_execute.end(), [](Node* node) {
             return node->REQUIRED;
         });
+
+    // Now the nodes is split into two parts, and the topology sequence is correct.
+
     nodes_to_execute_count = std::distance(nodes_to_execute.begin(), split);
 
     for (int i = 0; i < nodes_to_execute_count; ++i) {
@@ -159,16 +184,8 @@ void EagerNodeTreeExecutor::compile(NodeTree* tree)
     }
 }
 
-void EagerNodeTreeExecutor::execute_tree(NodeTree* tree)
+void EagerNodeTreeExecutor::prepare_memory()
 {
-    tree->ensure_topology_cache();
-    clear();
-
-    compile(tree);
-
-    input_states.resize(input_of_nodes_to_execute.size(), { nullptr, false });
-    output_states.resize(output_of_nodes_to_execute.size(), { nullptr });
-
     for (int i = 0; i < input_states.size(); ++i) {
         index_cache[input_of_nodes_to_execute[i]] = i;
         auto type = input_of_nodes_to_execute[i]->type_info->cpp_type;
@@ -182,13 +199,57 @@ void EagerNodeTreeExecutor::execute_tree(NodeTree* tree)
         output_states[i].value = { type, malloc(type->size()) };
         output_states[i].value.default_construct();
     }
+}
 
+void EagerNodeTreeExecutor::prepare_tree(NodeTree* tree)
+{
+    tree->ensure_topology_cache();
+    clear();
+
+    compile(tree);
+
+    input_states.resize(input_of_nodes_to_execute.size(), { nullptr, false });
+    output_states.resize(output_of_nodes_to_execute.size(), { nullptr });
+
+    prepare_memory();
+}
+
+void EagerNodeTreeExecutor::execute_tree(NodeTree* tree)
+{
     for (int i = 0; i < nodes_to_execute_count; ++i) {
         auto node = nodes_to_execute[i];
         auto result = execute_node(tree, node);
         if (result) {
             forward_output_to_input(node);
         }
+    }
+}
+
+GMutablePointer EagerNodeTreeExecutor::FindPtr(NodeSocket* socket)
+{
+    GMutablePointer ptr;
+    if (socket->in_out == PinKind::Input) {
+        ptr = input_states[index_cache[socket]].value;
+    }
+    else {
+        ptr = output_states[index_cache[socket]].value;
+    }
+    return ptr;
+}
+
+void EagerNodeTreeExecutor::sync_node_from_external_storage(NodeSocket* socket, void* data)
+{
+    if (index_cache.find(socket) != index_cache.end()) {
+        GMutablePointer ptr = FindPtr(socket);
+        ptr.type()->copy_construct(data, ptr.get());
+    }
+}
+
+void EagerNodeTreeExecutor::sync_node_to_external_storage(NodeSocket* socket, void* data)
+{
+    if (index_cache.find(socket) != index_cache.end()) {
+        GMutablePointer ptr = FindPtr(socket);
+        ptr.type()->copy_construct(ptr.get(), data);
     }
 }
 

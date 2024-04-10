@@ -10,3 +10,4 @@ libs
 .idea
 imgui.ini
 .cache
+.DS_Store

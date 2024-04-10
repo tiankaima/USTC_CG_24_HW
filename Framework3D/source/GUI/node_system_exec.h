@@ -1,19 +1,16 @@
 #pragma once
 
-#include "GCore/GOP.h"
-#include "GCore/GlobalUsdStage.h"
 #include "Nodes/node.hpp"
 #include "Nodes/node_tree.hpp"
 #include "USTC_CG.h"
-#include "imgui.h"
-#include "pxr/usd/usd/primRange.h"
 
 USTC_CG_NAMESPACE_OPEN_SCOPE
 class NodeSystemExecution {
    public:
+    virtual ~NodeSystemExecution() = default;
     NodeSystemExecution();
 
-    Node* create_node_menu();
+    virtual Node* create_node_menu();
 
     std::vector<std::unique_ptr<Node>>& get_nodes();
 
@@ -52,18 +49,7 @@ class NodeSystemExecution {
 
     unsigned GetNextId();
 
-    void try_execution()
-    {
-        if (required_execution) {
-            // for (auto&& prim: GlobalUsdStage::global_usd_stage->TraverseAll()) {
-            auto& stage = GlobalUsdStage::global_usd_stage;
-            stage->RemovePrim(pxr::SdfPath("/geom"));
-            stage->RemovePrim(pxr::SdfPath("/TexModel"));
-
-            executor->execute_tree(node_tree.get());
-            required_execution = false;
-        }
-    }
+    virtual void try_execution();
 
     std::vector<std::unique_ptr<NodeLink>>& get_links()
     {
@@ -75,12 +61,27 @@ class NodeSystemExecution {
 
     bool CanCreateLink(NodeSocket* a, NodeSocket* b);
 
-    std::string filename = "Blueprints.json";
 
-   private:
-    bool required_execution = true;
+   protected:
+    bool required_execution = false;
+    Node* default_node_menu(const std::map<std::string, NodeTypeInfo*>& registry);
 
     unsigned m_NextId = 1;
+};
+
+struct GeoNodeSystemExecution: public NodeSystemExecution{
+    void try_execution() override;
+    Node* create_node_menu() override;
+};
+
+
+struct RenderNodeSystemExecution : public NodeSystemExecution {
+    Node* create_node_menu() override;
+};
+
+struct CompositionNodeSystemExecution : public NodeSystemExecution {
+    void try_execution() override;
+    Node* create_node_menu() override;
 };
 
 USTC_CG_NAMESPACE_CLOSE_SCOPE
