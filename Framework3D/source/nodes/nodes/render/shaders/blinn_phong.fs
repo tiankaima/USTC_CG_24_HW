@@ -2,9 +2,6 @@
 
 // Define a uniform struct for lights
 struct Light {
-    // The matrices are used for shadow mapping. You need to fill it according to how we are filling it when building the normal maps (node_render_shadow_mapping.cpp). 
-    // Now, they are filled with identity matrix. You need to modify C++ code innode_render_deferred_lighting.cpp.
-    // Position and color are filled.
     mat4 light_projection;
     mat4 light_view;
     vec3 position;
@@ -14,13 +11,15 @@ struct Light {
 };
 
 layout(binding = 0) buffer lightsBuffer {
-Light lights[4];
+    Light lights[4];
 };
 
 uniform vec2 iResolution;
 
 uniform sampler2D diffuseColorSampler;
-uniform sampler2D normalMapSampler; // You should apply normal mapping in rasterize_impl.fs
+uniform sampler2D normalMapSampler;
+uniform sampler2D tangentMapSampler;
+uniform sampler2D bitangentMapSampler;
 uniform sampler2D metallicRoughnessSampler;
 uniform sampler2DArray shadow_maps;
 uniform sampler2D position;
@@ -33,29 +32,46 @@ uniform int light_count;
 layout(location = 0) out vec4 Color;
 
 void main() {
-vec2 uv = gl_FragCoord.xy / iResolution;
+    vec2 uv = gl_FragCoord.xy / iResolution;
 
-vec3 pos = texture2D(position,uv).xyz;
-vec3 normal = texture2D(normalMapSampler,uv).xyz;
+    vec3 pos = texture2D(position,uv).xyz;
+    vec3 normal = texture2D(normalMapSampler,uv).xyz;
 
-vec4 metalnessRoughness = texture2D(metallicRoughnessSampler,uv);
-float metal = metalnessRoughness.x;
-float roughness = metalnessRoughness.y;
+    vec3 T = texture2D(tangentMapSampler,uv).xyz;
+    vec3 B = texture2D(bitangentMapSampler,uv).xyz;
+    vec3 N = normal;
+    mat3 TBN = mat3(T, B, N);
 
-for(int i = 0; i < light_count; i ++) {
+    Color = vec4(B , 1.0);
+    return;
 
-float shadow_map_value = texture(shadow_maps, vec3(uv, lights[i].shadow_map_id)).x;
+//     normal = normalize(TBN * normal);
 
-// Visualization of shadow map
-Color += vec4(shadow_map_value, 0, 0, 1);
+    vec4 metallicRoughness = texture2D(metallicRoughnessSampler,uv);
+    float metal = metallicRoughness.x;
+    float roughness = metallicRoughness.y;
+    float shininess = (1.0 - roughness) * 100;
 
-// HW6_TODO: first comment the line above ("Color +=..."). That's for quick Visualization.
-// You should first do the Blinn Phong shading here. You can use roughness to modify alpha. Or you can pass in an alpha value through the uniform above.
+    for(int i = 0; i < light_count; i ++) {
+        vec3 lightDir = normalize(lights[i].position - pos);
+        vec3 viewDir = normalize(camPos - pos);
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        vec3 light_color = lights[i].color;
+        vec3 ambient_color = 0 * light_color;
+        vec3 diffuse_color = texture2D(diffuseColorSampler, uv).xyz;
 
-// After finishing Blinn Phong shading, you can do shadow mapping with the help of the provided shadow_map_value. You will need to refer to the node, node_render_shadow_mapping.cpp, for the light matrices definition. Then you need to fill the mat4 light_projection; mat4 light_view; with similar approach that we fill position and color.
-// For shadow mapping, as is discussed in the course, you should compare the value "position depth from the light's view" against the "blocking object's depth.", then you can decide whether it's shadowed.
+        float diffuse = abs(dot(normal, lightDir));
+        float specular = abs(dot(normal, halfwayDir));
 
-// PCSS is also applied here.
-}
+        if (diffuse == 0.0) {
+            specular = 0.0;
+        } else {
+            specular = pow(specular, shininess);
+        }
 
+        Color = vec4(ambient_color + diffuse * light_color * diffuse_color + specular * light_color, 1.0);
+
+        int shadow_map_id = lights[i].shadow_map_id;
+        float shadow_map_value = texture(shadow_maps, vec3(uv, shadow_map_id)).x;
+    }
 }

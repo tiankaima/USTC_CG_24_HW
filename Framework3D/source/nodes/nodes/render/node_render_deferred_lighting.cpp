@@ -7,6 +7,7 @@
 #include "Nodes/socket_types/basic_socket_types.hpp"
 #include "camera.h"
 #include "light.h"
+#include "pxr/base/gf/frustum.h"
 #include "pxr/imaging/glf/simpleLight.h"
 #include "pxr/imaging/hd/tokens.h"
 #include "render_node_base.h"
@@ -25,6 +26,8 @@ static void node_declare(NodeDeclarationBuilder& b)
     b.add_input<decl::Texture>("diffuseColor");
     b.add_input<decl::Texture>("MetallicRoughness");
     b.add_input<decl::Texture>("Normal");
+    b.add_input<decl::Texture>("Tangent");
+    b.add_input<decl::Texture>("Bitangent");
     b.add_input<decl::Texture>("Shadow Maps");
 
     b.add_input<decl::String>("Lighting Shader").default_val("shaders/blinn_phong.fs");
@@ -51,6 +54,8 @@ static void node_exec(ExeParams params)
 
     auto metallic_roughness = params.get_input<TextureHandle>("MetallicRoughness");
     auto normal_texture = params.get_input<TextureHandle>("Normal");
+    auto tangent_texture = params.get_input<TextureHandle>("Tangent");
+    auto bitangent_texture = params.get_input<TextureHandle>("Bitangent");
 
     auto shadow_maps = params.get_input<TextureHandle>("Shadow Maps");
 
@@ -104,17 +109,26 @@ static void node_exec(ExeParams params)
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, normal_texture->texture_id);
 
-    shader->shader.setInt("metallicRoughnessSampler", 2);
+    shader->shader.setInt("tangentMapSampler", 2);
     glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, tangent_texture->texture_id);
+
+    shader->shader.setInt("bitangentMapSampler", 3);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, bitangent_texture->texture_id);
+
+    shader->shader.setInt("metallicRoughnessSampler", 4);
+    glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, metallic_roughness->texture_id);
 
-    shader->shader.setInt("shadow_maps", 3);
-    glActiveTexture(GL_TEXTURE3);
+    shader->shader.setInt("shadow_maps", 5);
+    glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_2D_ARRAY, shadow_maps->texture_id);
 
-    shader->shader.setInt("position", 4);
-    glActiveTexture(GL_TEXTURE4);
+    shader->shader.setInt("position", 6);
+    glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, position_texture->texture_id);
+
 
     GfVec3f camPos = GfMatrix4f(free_camera->GetTransform()).ExtractTranslation();
     shader->shader.setVec3("camPos", camPos);
@@ -128,14 +142,25 @@ static void node_exec(ExeParams params)
     for (int i = 0; i < lights.size(); ++i) {
         if (!lights[i]->GetId().IsEmpty()) {
             GlfSimpleLight light_params = lights[i]->Get(HdTokens->params).Get<GlfSimpleLight>();
+
             auto diffuse4 = light_params.GetDiffuse();
             pxr::GfVec3f diffuse3(diffuse4[0], diffuse4[1], diffuse4[2]);
             auto position4 = light_params.GetPosition();
             pxr::GfVec3f position3(position4[0], position4[1], position4[2]);
 
             auto radius = lights[i]->Get(HdLightTokens->radius).Get<float>();
-            
-            light_vector.emplace_back(GfMatrix4f(), GfMatrix4f(), position3, 0.f, diffuse3, i);
+
+            GfFrustum frustum;
+            GfVec3f light_position = { light_params.GetPosition()[0],
+                                       light_params.GetPosition()[1],
+                                       light_params.GetPosition()[2] };
+            auto light_view_mat =
+                GfMatrix4f().SetLookAt(light_position, GfVec3f(0, 0, 0), GfVec3f(0, 0, 1));
+            frustum.SetPerspective(120.f, 1.0, 1, 25.f);
+            auto light_projection_mat = GfMatrix4f(frustum.ComputeProjectionMatrix());
+
+            light_vector.emplace_back(
+                light_projection_mat, light_view_mat, position3, radius, diffuse3, i);
 
             // You can add directional light here, and also the corresponding shadow map calculation
             // part.
