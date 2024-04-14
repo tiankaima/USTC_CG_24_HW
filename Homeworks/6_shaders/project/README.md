@@ -88,4 +88,4 @@ A[Add Point Light]
 
 ## 运行截图 Screenshots
 
-![1](./screentshots/1.jpg)
+![1](./screenshots/1.png)
