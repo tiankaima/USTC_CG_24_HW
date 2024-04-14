@@ -27,10 +27,26 @@ void main() {
     texcoords = vTexcoord;
 
     diffuseColor = texture2D(diffuseColorSampler, vTexcoord).xyz;
-    metallicRoughness = texture2D(metallicRoughnessSampler, vTexcoord).yz;
+    metallicRoughness = texture2D(metallicRoughnessSampler, vTexcoord).zy;
 
     vec3 normalmap_value = texture2D(normalMapSampler, vTexcoord).xyz;
     normal = normalize(vertexNormal);
 
     // HW6_TODO: Apply normal map here. Use normal textures to modify vertex normals.
+
+    // Calculate tangent and bitangent
+    vec3 edge1 = dFdx(vertexPosition);
+    vec3 edge2 = dFdy(vertexPosition);
+    vec2 deltaUV1 = dFdx(vTexcoord);
+    vec2 deltaUV2 = dFdy(vTexcoord);
+
+    vec3 tangent = edge1 * deltaUV2.y - edge2 * deltaUV1.y;
+
+    // Robust tangent and bitangent evaluation
+    if(length(tangent) < 1E-7) {
+        vec3 bitangent = -edge1 * deltaUV2.x + edge2 * deltaUV1.x;
+        tangent = normalize(cross(bitangent, normal));
+    }
+    tangent = normalize(tangent - dot(tangent, normal) * normal);
+    vec3 bitangent = normalize(cross(tangent,normal));
 }

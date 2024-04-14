@@ -124,7 +124,7 @@ void Hd_USTC_CG_Mesh::_UpdatePrimvarSources(HdSceneDelegate* sceneDelegate, HdDi
         for (const HdPrimvarDescriptor& pv : primvars) {
             if (HdChangeTracker::IsPrimvarDirty(dirtyBits, id, pv.name) &&
                 pv.name != HdTokens->points) {
-                logging("Primvar source " + pv.name.GetString());
+                logging("Primvar source " + pv.name.GetString(), Info);
                 _primvarSourceMap[pv.name] = { GetPrimvar(sceneDelegate, pv.name), interp };
             }
         }
@@ -267,44 +267,56 @@ void Hd_USTC_CG_Mesh::RefreshGLBuffer()
 
 void Hd_USTC_CG_Mesh::RefreshTexcoordGLBuffer(TfToken texcoord_name)
 {
+    if (texcoord_name.IsEmpty()) {
+        texcoord_name = texcoord_name = TfToken("UVMap");
+    }
     if (!texcoord_name.IsEmpty()) {
         if (!_texcoordsClean) {
-            glDeleteBuffers(1, &texcoords);
-            glGenBuffers(1, &texcoords);
+            if (!this->_primvarSourceMap[texcoord_name].data.IsEmpty()) {
+                glDeleteBuffers(1, &texcoords);
+                glGenBuffers(1, &texcoords);
 
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, texcoords);
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, texcoords);
 
-            logging("Attempts to attach texcoord: " + texcoord_name.GetString());
-            assert(this->_primvarSourceMap[texcoord_name].data.CanCast<VtVec2fArray>());
+                logging(
+                    GetId().GetString() +
+                        " Attempts to attach texcoord: " + texcoord_name.GetString(),
+                    Info);
+                assert(this->_primvarSourceMap[texcoord_name].data.CanCast<VtVec2fArray>());
 
-            HdMeshUtil mesh_util(&topology, GetId());
-            VtArray<GfVec2f> raw_texcoord =
-                this->_primvarSourceMap[texcoord_name].data.Get<VtVec2fArray>();
-            VtValue vt_triangulated;
-            mesh_util.ComputeTriangulatedFaceVaryingPrimvar(
-                raw_texcoord.cdata(), raw_texcoord.size(), HdTypeFloatVec2, &vt_triangulated);
-            auto triangulated = vt_triangulated.Get<VtVec2fArray>();
-            VtArray<GfVec2f> texcoord;
+                VtArray<GfVec2f> raw_texcoord =
+                    this->_primvarSourceMap[texcoord_name].data.Get<VtVec2fArray>();
 
-            if (this->_primvarSourceMap[texcoord_name].interpolation ==
-                HdInterpolationFaceVarying) {
-                texcoord.resize(points.size());
-                for (int i = 0; i < triangulatedIndices.size(); ++i) {
-                    for (int j = 0; j < 3; ++j) {
-                        texcoord[triangulatedIndices[i][j]] = raw_texcoord[i * 3 + j];
+                VtArray<GfVec2f> texcoord;
+
+                if (this->_primvarSourceMap[texcoord_name].interpolation ==
+                    HdInterpolationFaceVarying) {
+                    HdMeshUtil mesh_util(&topology, GetId());
+
+                    VtValue vt_triangulated;
+                    mesh_util.ComputeTriangulatedFaceVaryingPrimvar(
+                        raw_texcoord.cdata(),
+                        raw_texcoord.size(),
+                        HdTypeFloatVec2,
+                        &vt_triangulated);
+                    auto triangulated = vt_triangulated.Get<VtVec2fArray>();
+                    texcoord.resize(points.size());
+                    for (int i = 0; i < triangulatedIndices.size(); ++i) {
+                        for (int j = 0; j < 3; ++j) {
+                            texcoord[triangulatedIndices[i][j]] = triangulated[i * 3 + j];
+                        }
                     }
                 }
-            }
-            else {
-                texcoord = raw_texcoord;
-            }
+                else {
+                    texcoord = raw_texcoord;
+                }
 
-            glBufferData(
-                GL_SHADER_STORAGE_BUFFER,
-                texcoord.size() * sizeof(GfVec2f),
-                texcoord.cdata(),
-                GL_STATIC_DRAW);
-
+                glBufferData(
+                    GL_SHADER_STORAGE_BUFFER,
+                    texcoord.size() * sizeof(GfVec2f),
+                    texcoord.cdata(),
+                    GL_STATIC_DRAW);
+            }
             _texcoordsClean = true;
         }
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texcoords);

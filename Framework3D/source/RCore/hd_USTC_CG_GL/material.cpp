@@ -42,13 +42,13 @@ void Hd_USTC_CG_Material::TryLoadTexture(
 {
     for (auto&& input_connection : usd_preview_surface.inputConnections) {
         if (input_connection.first == TfToken(name)) {
-            logging("Loading texture: " + input_connection.first.GetString());
+            logging("Loading texture: " + input_connection.first.GetString(), Info);
             auto texture_node = get_input_connection(surfaceNetwork, input_connection);
             assert(texture_node.nodeTypeId == UsdImagingTokens->UsdUVTexture);
 
             auto file_name =
                 texture_node.parameters[TfToken("file")].Get<SdfAssetPath>().GetAssetPath();
-            logging("Texture file name: " + file_name);
+            logging("Texture file name: " + file_name, Info);
 
             HioImage::SourceColorSpace colorSpace;
 
@@ -82,43 +82,8 @@ void Hd_USTC_CG_Material::TryLoadParameter(
     for (auto&& parameter : usd_preview_surface.parameters) {
         if (parameter.first == name) {
             descriptor.value = parameter.second;
-            logging("Loading parameter: " + parameter.first.GetString());
+            logging("Loading parameter: " + parameter.first.GetString(), Info);
         }
-    }
-}
-
-static HdFormat hdFormatConversion(HioFormat format)
-{
-    switch (format) {
-        case HioFormatUNorm8: return HdFormatUNorm8;
-        case HioFormatUNorm8Vec2: return HdFormatUNorm8Vec2;
-        case HioFormatUNorm8Vec3: return HdFormatUNorm8Vec3;
-        case HioFormatUNorm8Vec4: return HdFormatUNorm8Vec4;
-        case HioFormatSNorm8: return HdFormatSNorm8;
-        case HioFormatSNorm8Vec2: return HdFormatSNorm8Vec2;
-        case HioFormatSNorm8Vec3: return HdFormatSNorm8Vec3;
-        case HioFormatSNorm8Vec4: return HdFormatSNorm8Vec4;
-        case HioFormatFloat16: return HdFormatFloat16;
-        case HioFormatFloat16Vec2: return HdFormatFloat16Vec2;
-        case HioFormatFloat16Vec3: return HdFormatFloat16Vec3;
-        case HioFormatFloat16Vec4: return HdFormatFloat16Vec4;
-        case HioFormatFloat32: return HdFormatFloat32;
-        case HioFormatFloat32Vec2: return HdFormatFloat32Vec2;
-        case HioFormatFloat32Vec3: return HdFormatFloat32Vec3;
-        case HioFormatFloat32Vec4: return HdFormatFloat32Vec4;
-        case HioFormatInt16: return HdFormatInt16;
-        case HioFormatInt16Vec2: return HdFormatInt16Vec2;
-        case HioFormatInt16Vec3: return HdFormatInt16Vec3;
-        case HioFormatInt16Vec4: return HdFormatInt16Vec4;
-        case HioFormatUInt16: return HdFormatUInt16;
-        case HioFormatUInt16Vec2: return HdFormatUInt16Vec2;
-        case HioFormatUInt16Vec3: return HdFormatUInt16Vec3;
-        case HioFormatUInt16Vec4: return HdFormatUInt16Vec4;
-        case HioFormatInt32: return HdFormatInt32;
-        case HioFormatInt32Vec2: return HdFormatInt32Vec2;
-        case HioFormatInt32Vec3: return HdFormatInt32Vec3;
-        case HioFormatInt32Vec4: return HdFormatInt32Vec4;
-        default: return HdFormatInvalid;
     }
 }
 
@@ -166,8 +131,31 @@ GLuint Hd_USTC_CG_Material::createTextureFromHioImage(const InputDescriptor& des
         free(storageSpec.data);
     }
     else {
-        if (!descriptor.value.IsEmpty()) {
+        if (descriptor.input_name == TfToken("roughness") ||
+            descriptor.input_name == TfToken("metallic")) {
+            logging("Creating metallic or roughness for " + GetId().GetString());
+
+            float metallic_value = metallic.value.Get<float>();
+            float roughness_value = roughness.value.Get<float>();
+            assert(metallic.value.CanCast<float>());
+            assert(roughness.value.CanCast<float>());
+            float color[4] = { 0, metallic_value, roughness_value, 1.0f };
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GetGLInternalFormat(HioFormatFloat32Vec4),
+                1,
+                1,
+                0,
+                GetGLFormat(HioFormatFloat32Vec4),
+                GetGLType(HioFormatFloat32Vec4),
+                color);
+        }
+        else if (!descriptor.value.IsEmpty()) {
             if (descriptor.value.CanCast<GfVec3f>()) {
+                auto val = descriptor.value.Get<GfVec3f>();
+                float color[4] = { val[0], val[1], val[2], 1.0f };
+
                 glTexImage2D(
                     GL_TEXTURE_2D,
                     0,
@@ -177,14 +165,21 @@ GLuint Hd_USTC_CG_Material::createTextureFromHioImage(const InputDescriptor& des
                     0,
                     GetGLFormat(HioFormatFloat32Vec4),
                     GetGLType(HioFormatFloat32Vec4),
-                    descriptor.value.Get<GfVec3f>().data());
+                    color);
             }
         }
     }
-    // glGenerateMipmap(texture);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    float aniso = 0.0f;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return texture;
@@ -192,15 +187,8 @@ GLuint Hd_USTC_CG_Material::createTextureFromHioImage(const InputDescriptor& des
 
 void Hd_USTC_CG_Material::TryCreateGLTexture(InputDescriptor& descriptor)
 {
-    if (descriptor.image) {
-        if (descriptor.glTexture == 0) {
-            descriptor.glTexture = createTextureFromHioImage(descriptor);
-        }
-    }
-    else {
-        if (descriptor.glTexture == 0) {
-            descriptor.glTexture = createTextureFromHioImage(descriptor);
-        }
+    if (descriptor.glTexture == 0) {
+        descriptor.glTexture = createTextureFromHioImage(descriptor);
     }
 }
 
@@ -212,13 +200,18 @@ void Hd_USTC_CG_Material::TryCreateGLTexture(InputDescriptor& descriptor)
     TryLoadTexture(#INPUT, INPUT, usd_preview_surface); \
     TryLoadParameter(#INPUT, INPUT, usd_preview_surface);
 
+#define NAME_IT(INPUT) INPUT.input_name = TfToken(#INPUT);
+
 Hd_USTC_CG_Material::Hd_USTC_CG_Material(const SdfPath& id) : HdMaterial(id)
 {
+    logging("Creating material " + id.GetString());
     diffuseColor.value = VtValue(GfVec3f(0.8, 0.8, 0.8));
-    roughness.value = VtValue(GfVec3f(0.0f, 0.8, 0.0));
+    roughness.value = VtValue(0.8f);
 
-    metallic.value = VtValue(GfVec3f(0.0f, 0.8, 0.0));
+    metallic.value = VtValue(0.0f);
     normal.value = VtValue(GfVec3f(0.5, 0.5, 1.0));
+
+    MACRO_MAP(NAME_IT,INPUT_LIST);
 }
 
 void Hd_USTC_CG_Material::Sync(

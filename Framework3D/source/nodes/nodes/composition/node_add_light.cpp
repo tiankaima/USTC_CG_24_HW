@@ -38,7 +38,7 @@ static void node_exec(ExeParams params)
 
     auto global_stage = GlobalUsdStage::global_usd_stage;
 
-    auto xformPath = SdfPath("/Reference").AppendPath(SdfPath("XForm"));
+    auto xformPath = SdfPath("/Reference").AppendPath(SdfPath("XForm"+sdf_path.GetString()));
     auto lightPath = xformPath.AppendPath(sdf_path);
     // Create a transform for the light and set its position
     pxr::UsdGeomXform lightXform = pxr::UsdGeomXform::Define(global_stage, xformPath);
@@ -50,7 +50,8 @@ static void node_exec(ExeParams params)
     transformOp.Set(pxr::GfMatrix4d().SetTranslate(pxr::GfVec3f(x, y, z)));
 
     pxr::UsdLuxSphereLight sphere_light = pxr::UsdLuxSphereLight::Define(global_stage, lightPath);
-    sphere_light.CreateDiffuseAttr().Set(VtValue(GfVec3f(r, g, b)));
+    sphere_light.CreateColorAttr().Set(VtValue(GfVec3f(r, g, b)));
+    sphere_light.CreateDiffuseAttr().Set(1.0f);
     auto radius = params.get_input<float>("radius");
     sphere_light.CreateRadiusAttr().Set(VtValue(radius));
 }
