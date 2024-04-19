@@ -29,8 +29,6 @@ static void node_declare(NodeDeclarationBuilder& b)
     b.add_output<decl::Texture>("diffuseColor");
     b.add_output<decl::Texture>("MetallicRoughness");
     b.add_output<decl::Texture>("Normal");
-    b.add_output<decl::Texture>("Tangent");
-    b.add_output<decl::Texture>("Bitangent");
 }
 
 static void node_exec(ExeParams params)
@@ -55,8 +53,6 @@ static void node_exec(ExeParams params)
     texture_desc.format = HdFormatFloat32Vec3;
     auto position_texture = resource_allocator.create(texture_desc);
     auto normal_texture = resource_allocator.create(texture_desc);
-    auto tangent_texture = resource_allocator.create(texture_desc);
-    auto bitangent_texture = resource_allocator.create(texture_desc);
 
     texture_desc.format = HdFormatFloat32UInt8;
     auto depth_texture_for_opengl = resource_allocator.create(texture_desc);
@@ -101,10 +97,6 @@ static void node_exec(ExeParams params)
         GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, metallic_roughness->texture_id, 0);
     glFramebufferTexture2D(
         GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, normal_texture->texture_id, 0);
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, tangent_texture->texture_id, 0);
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, bitangent_texture->texture_id, 0);
     glFramebufferTexture2D(
         GL_FRAMEBUFFER,
         GL_DEPTH_STENCIL_ATTACHMENT,
@@ -158,8 +150,6 @@ static void node_exec(ExeParams params)
 
     params.set_output("Position", position_texture);
     params.set_output("Normal", normal_texture);
-    params.set_output("Tangent", tangent_texture);
-    params.set_output("Bitangent", bitangent_texture);
     params.set_output("Depth", depth_texture);
     params.set_output("Texcoords", texcoords_texture);
     params.set_output("MetallicRoughness", metallic_roughness);

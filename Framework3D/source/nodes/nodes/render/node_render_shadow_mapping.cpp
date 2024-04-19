@@ -81,14 +81,15 @@ static void node_exec(ExeParams params)
 
                 light_view_mat =
                     GfMatrix4f().SetLookAt(light_position, GfVec3f(0, 0, 0), GfVec3f(0, 0, 1));
-                frustum.SetPerspective(120.f, 1.0, 1, 25.f);
+                frustum.SetPerspective(150.f, 1.0, 1, 25.f);
                 light_projection_mat = GfMatrix4f(frustum.ComputeProjectionMatrix());
             }
             // else (lights[light_id]->GetLightType() == HdPrimTypeTokens->distantLight). See
             // light.cpp under hd_ustc_cg_gl/
 
+
             shader_handle->shader.setMat4("light_view", light_view_mat);
-            shader_handle->shader.setMat4("light_projection", GfMatrix4f(light_projection_mat));
+            shader_handle->shader.setMat4("light_projection", light_projection_mat);
 
             glFramebufferTextureLayer(
                 GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, shadow_map_texture->texture_id, 0, light_id);
