@@ -11,3 +11,5 @@ libs
 imgui.ini
 .cache
 .DS_Store
+.vs
+*.zip
