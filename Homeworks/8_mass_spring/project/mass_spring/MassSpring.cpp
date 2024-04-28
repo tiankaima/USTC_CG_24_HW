@@ -58,16 +58,17 @@ void MassSpring::step()
         fext.rowwise() = acceleration_ext.transpose();
         Eigen::MatrixXd Y = X + h * vel + h * h * fext;
         Eigen::MatrixXd grad_g =  mass_per_vertex * (X - Y) / h / h - computeGrad(stiffness);
-        Eigen::MatrixXd grad_g_ = flatten(grad_g);
 
         // fix the fixed points
-        //        for (unsigned i = 0; i < n_vertices; i++) {
-        //            if (dirichlet_bc_mask[i]) {
-        //                for (int j = 0; j < 3; j++) {
-        //                    b(3 * i + j) = X(i, j);
-        //                }
-        //            }
-        //        }
+       for (unsigned i = 0; i < n_vertices; i++) {
+           if (dirichlet_bc_mask[i]) {
+               for (int j = 0; j < 3; j++) {
+                   grad_g(i, j) = X(i, j);
+               }
+           }
+       }
+
+        Eigen::MatrixXd grad_g_ = flatten(grad_g);
 
         Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
         solver.compute(H);
@@ -171,15 +172,15 @@ Eigen::SparseMatrix<double> MassSpring::computeHessianSparse(double stiffness)
             }
         }
 
-        //        // fix the fixed points
-        //        if (dirichlet_bc_mask[e.first]) {
-        //            for (int j = 0; j < 3; j++) {
-        //                for (int k = 0; k < 3; k++) {
-        //                    H.coeffRef(3 * e.first + j, 3 * e.first + k) = 0;
-        //                }
-        //                H.coeffRef(3 * e.first + j, 3 * e.first + j) = 1;
-        //            }
-        //        }
+        // fix the fixed points
+        if (dirichlet_bc_mask[e.first]) {
+            for (int j = 0; j < 3; j++) {
+                for (int k = 0; k < 3; k++) {
+                    H.coeffRef(3 * e.first + j, 3 * e.first + k) = 0;
+                }
+                H.coeffRef(3 * e.first + j, 3 * e.first + j) = 1;
+            }
+        }
 
         i++;
     }
