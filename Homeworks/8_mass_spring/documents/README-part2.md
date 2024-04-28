@@ -1,4 +1,4 @@
-# 弹簧质点系统仿真简明教程 Part 2 之加速方法
+ # 弹簧质点系统仿真简明教程 Part 2 之加速方法
 
 如果你已经完成了Part 1，那么欢迎你来到弹簧质点系统仿真的进阶教程。我们将介绍刘天添老师在论文[Fast Simulation of Mass-Spring Systems](https://tiantianliu.cn/papers/liu13fast/liu13fast.pdf)中提出的加速方法，并解释论文中公式的含义。
 
@@ -6,7 +6,7 @@
 
 ## 1. 弹性能量的新视角
 
-在Part 1中我们说过，弹簧质点系统中每一根弹簧的能量可以定义为（Liu的论文中使用$\mathbf{p}$表示顶点位置）:
+在Part 1中我们说过，弹簧质点系统中每一根弹簧的能量可以定义为（Liu的论文中使用 $\mathbf{p}$ 表示顶点位置）:
 
 $$
 E_i = \frac{1}{2} k (\|\mathbf{x}_{i}\| -L)^2  \tag{1}
@@ -104,6 +104,8 @@ $$
 
 并且本质上， $\mathbf{A} = \mathbf{M} + h^2 \mathbf{L}$ 是对系统能量的 Hessian矩阵的一种近似，其中 $\mathbf{L}$ 是系统的拉普拉斯（Laplacian）矩阵。
 
+需要注意的是：求解的时候因为 $\mathbf{y}$ 的定义为  $\mathbf{y} := \mathbf{x}^n + h \mathbf{v}^n + h^2 \mathbf{M}^{-1} \mathbf{f}_{\text{ext}}$，而每次迭代求解的 $\mathbf{x}$ 为 $\mathbf{x}^{n+1}$，所以 $\mathbf{y}$ 不需要更新，仍然用上一步的 $\mathbf{x}^n$ 和 $\mathbf{v}^n$。
+
 整个方法的流程示意图如下：
 
 <div  align="center">    
@@ -146,7 +148,7 @@ void FastMassSpring::step()
  <img src="../images/fast_mass_spring.gif" style="zoom:100%" />
 </div>
 
-此次作业所需要连接的节点图与Part 1一样，只需要通过打开开关`enable Liu13`来切换到该加速方法。
+此次作业所需要连接的节点图与Part 1一样，只需要通过打开开关`enable Liu13`来切换到该加速方法。建议使用`Release`模式编译来减少节点图其他部分的时间代价。如果想凸显加速方法相比于Part 1部分方法的优势，可以增加mesh分辨率，如使用`grid40x40.usda`.
 
 
 值得一提的是，Liu指出，这一加速方法在迭代次数增加时的结果会逐渐接近Newton法求解的结果，如下图所示。**鼓励大家在报告中包含不同迭代次数的仿真结果的比较**。
