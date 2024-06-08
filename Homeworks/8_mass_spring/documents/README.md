@@ -63,7 +63,7 @@ $$
 E_i = \frac{k}{2} (\|\mathbf{x} _ {i1} - \mathbf{x}_{i2}\| - L)^2 
 $$
 
-我们记录 $\mathbf{x}_{i} := \mathbf{x} _ {i1} - \mathbf{x} _ {i2}$
+我们记 $\mathbf{x}_{i} := \mathbf{x} _ {i1} - \mathbf{x} _ {i2}$
 那么总体的能量为：
 
 $$
@@ -256,6 +256,8 @@ $$
 \nabla^2 g \Delta \mathbf{x} = -\nabla g \tag{7}
 $$ 
 
+在最优化中，求解一个优化问题可能需要迭代多次，直到收敛（ $\|\nabla g\|$ 小于阈值 ），我们这里出于效率考虑，在一个时间步内只进行一次牛顿法的迭代，你也可以尝试在一个时间步内让牛顿法迭代多次直到收敛，并比较两种做法的仿真结果。
+
 > 这里其实还涉及到一个Line Search的部分，一般基于线搜索方法优化问题的流程：1. 先确定搜索方向 $\mathbf{p}$（我们这里 $\mathbf{p} = (\nabla^2 g)^{-1}\mathbf{\nabla}g$ ），2. 然后确定要前进的步长 $\alpha$（该步骤称为Line Search），3. 最后更新 $\mathbf{x}^{n+1} = \mathbf{x}^n - \alpha \mathbf{p}$  。
 >由于牛顿法的推荐步长是1，这里我们就不额外进行Line Search
 
@@ -309,8 +311,8 @@ Eigen::SparseMatrix<double> MassSpring::computeHessianSparse(double stiffness)
 
 > 能量 $g$ 的Hessian的正定性问题：牛顿法并不是无条件收敛，也就是牛顿法给出的下降方向不一定能够使得能量真的下降！即不满足 $((\nabla^2 g)^{-1}\nabla g)^{\top} \nabla g > 0$ . 只有 $\nabla^2 g$ 正定的时候才能保证收敛。
 > 
-> 你可以首先不管这个问题，看看仿真结果如何。如果出现问题，为了让 $\nabla^2 g$ 正定，你可以尝试：
-> 1. 在计算弹簧能量的Hessian时，**当$L_i > \|\mathbf{x}_i \|$ 时**，令第 $i$ 根弹簧 $\mathbf{H}_i$ 近似为 $\mathbf{H}_i \approx k \frac{\mathbf{x}_i {\mathbf{x}_i}^\top}{\|\mathbf{x}_i\|^2}$ . 
+> 你可以首先不管这个问题，看看仿真结果如何。如果出现问题，为了让 $\nabla^2 g$ 正定，你可以尝试（三选1，推荐1）：
+> 1. 在计算弹簧能量的Hessian时，**当 $L_i > \|\mathbf{x}_i \|$ 时**，令第 $i$ 根弹簧 $\mathbf{H}_i$ 近似为 $\mathbf{H}_i \approx k \frac{\mathbf{x}_i {\mathbf{x}_i}^\top}{\|\mathbf{x}_i\|^2}$ . 
 > 2. 为 $\nabla^2 g$ 对角线加上 $\epsilon \mathbf{I}$， $\epsilon$ 为可调参数，来让Hessian最小的特征值大于0. 
 > 3. 对 $\nabla^2 g$ 做SVD分解，然后精确地获取其最小特征值，令其大于0，再重新用SVD得到新的Hessian（速度预期会很慢）
 > 
@@ -339,7 +341,7 @@ $$
 $$  
 
 
-如果实现正确，将1. 劲度系数`stiffness`和2.时间步长`h`设置为合理的值（隐式时间积分不需要调阻尼系数），并考虑了Hessian的正定性：就可以看到下面的仿真结果（gif经过加速），可以实现比半隐式时间积分大20倍甚至更多的时间步长（但由于需要组装Hessian并求解线性方程组，隐式时间积分每一步的时间会比半隐式时间积分长）：
+如果实现正确，将1. 劲度系数`stiffness`(如100-1000)和2.时间步长`h`（如0.01）设置为合理的值（隐式时间积分不需要调阻尼系数），并考虑了Hessian的正定性：就可以看到下面的仿真结果（gif经过加速），可以实现比半隐式时间积分大20倍甚至更多的时间步长（但由于需要组装Hessian并求解线性方程组，隐式时间积分每一步的时间会比半隐式时间积分长）：
 
 <div  align="center">    
  <img src="../images/implicit-euler.gif" style="zoom:80%" />
@@ -435,7 +437,7 @@ Eigen::MatrixXd MassSpring::getSphereCollisionForce(Eigen::Vector3d center, doub
 
 在实践中，我们发现牛顿法求解弹簧质点仿真还是有点慢。（我们提供了`TIC`和`TOC`宏来打印程序运行时间）
 
-如何加速？我们将在Part2进行介绍，这也是本次作业的选做内容。
+如何加速？我们将在[Part2](./README-part2.md)进行介绍，这也是本次作业的选做内容。
 
 ## 参考资料
 1. GAMES 103 Lecture 2 & 5 

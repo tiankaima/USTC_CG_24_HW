@@ -12,68 +12,12 @@
 #include "geom_node_base.h"
 #include "mass_spring/FastMassSpring.h"
 #include "mass_spring/MassSpring.h"
+#include "mass_spring/utils.h"
 #include "utils/util_openmesh_bind.h"
 
 namespace USTC_CG::node_mass_spring {
 
-// -------------------- helper functions (No need to modify) --------------------
-
-Eigen::MatrixXi usd_faces_to_eigen(
-    const pxr::VtArray<int>& faceVertexCount,
-    const pxr::VtArray<int>& faceVertexIndices)
-{
-    unsigned nFaces = faceVertexCount.size();
-    Eigen::MatrixXi F(nFaces, 3);
-    unsigned count = 0;
-    for (int i = 0; i < nFaces; i++) {
-        for (int j = 0; j < 3; j++) {
-            F(i, j) = faceVertexIndices[count];
-            count += 1;
-        }
-    }
-    return F;
-}
-Eigen::MatrixXd usd_vertices_to_eigen(const pxr::VtArray<pxr::GfVec3f>& v)
-{
-    unsigned nVertices = v.size();
-    Eigen::MatrixXd V(nVertices, 3);
-    for (int i = 0; i < nVertices; i++) {
-        for (int j = 0; j < 3; j++) {
-            V(i, j) = v[i][j];
-        }
-    }
-    return V;
-}
-
-pxr::VtArray<pxr::GfVec3f> eigen_to_usd_vertices(const Eigen::MatrixXd& V)
-{
-    pxr::VtArray<pxr::GfVec3f> vertices;
-    for (int i = 0; i < V.rows(); i++) {
-        vertices.push_back(pxr::GfVec3f(V(i, 0), V(i, 1), V(i, 2)));
-    }
-    return vertices;
-}
-
-// Here F is of shape [nFaces, 3] for triangular mesh
-EdgeSet get_edges(const Eigen::MatrixXi& F)
-{
-    EdgeSet edges;
-    for (int i = 0; i < F.rows(); i++) {
-        for (int j = 0; j < F.cols(); j++) {
-            int v0 = F(i, j);
-            int v1 = F(i, (j + 1) % F.cols());
-            if (v0 > v1) {
-                std::swap(v0, v1);
-            }
-            edges.insert(std::make_pair(v0, v1));
-        }
-    }
-    return edges;
-}
-
 using namespace Eigen;
-
-// --------------------------------------------------------------------------
 
 static void node_mass_spring_declare(NodeDeclarationBuilder& b)
 {

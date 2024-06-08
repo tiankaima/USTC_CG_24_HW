@@ -1,7 +1,7 @@
 file(GLOB_RECURSE CPP_FILES ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
 file(GLOB NODE_FILES ${CMAKE_CURRENT_LIST_DIR}/Nodes/GNodes/*.cpp)
 
-add_library(GCore STATIC ${CPP_FILES})
+add_library(GCore ${CPP_FILES})
 
 target_link_libraries(GCore PUBLIC OpenMeshCore)
 
@@ -15,6 +15,7 @@ target_link_libraries(GCore
 	usdVol
 	OpenMeshCore
 	usdGeom 
+	usdSkel
 	${TBB_tbb_LIBRARY}
 )
 target_compile_features(GCore PUBLIC cxx_std_20)

@@ -10,6 +10,8 @@ namespace decl {
 
 DECLARE_SOCKET_TYPE(Geometry)
 DECLARE_SOCKET_TYPE(MassSpringSocket)
+DECLARE_SOCKET_TYPE(SPHFluidSocket)
+DECLARE_SOCKET_TYPE(AnimatorSocket)
 
 }  // namespace decl
 

@@ -16,7 +16,7 @@ $$
 
 对于(1)式中的能量，我们之前看待的角度为：给定原长为 $L_i$ 的弹簧，让 $\mathbf{x}_i$ 变化，不同的 $\mathbf{x}_i$ 带来了不同的能量。 $\mathbf{x}_i$ 具有旋转的自由度，只要其范数 $= L_i$ 即可最小化能量。
 
-但是Liu等人提出，我们可以从另一个角度看待这个能量：如果固定 $\mathbf{x}_ i$ ，让弹簧原始的长度与方向变化，也就是把弹簧表示为一个向量 $\mathbf{d}$ ，那么 $(\|\mathbf{x} _ {i}\| - L)^2$ 可以被看作是一个优化问题的解： $\min_{\| \mathbf{d}\| =r}\| \mathbf{x}_{i} - \mathbf{d}  \|^2$ 。 通过“三角形两边之差一定小于第三边”的原理我们可以容易地证明这一点，如下图所示。
+但是Liu等人提出，我们可以从另一个角度看待这个能量：如果固定 $\mathbf{x}_ i$ ，让弹簧原始的长度与方向变化，也就是把弹簧表示为一个向量 $\mathbf{d}$ ，那么 $(\|\mathbf{x} _ {i}\| - L)^2$ 可以被看作是一个优化问题的解： $\min_{\| \mathbf{d}\| =L} \| \mathbf{x}_{i} - \mathbf{d}  \|^2$ 。 通过“三角形两边之差一定小于第三边”的原理我们可以容易地证明这一点，如下图所示。
 
 <div  align="center">    
  <img src="../images/liu13-1.png" style="zoom:40%" />
@@ -106,7 +106,7 @@ $$
 
 需要注意的是：求解的时候因为 $\mathbf{y}$ 的定义为  $\mathbf{y} := \mathbf{x}^n + h \mathbf{v}^n + h^2 \mathbf{M}^{-1} \mathbf{f}_{\text{ext}}$，而每次迭代求解的 $\mathbf{x}$ 为 $\mathbf{x}^{n+1}$，所以 $\mathbf{y}$ 不需要更新，仍然用上一步的 $\mathbf{x}^n$ 和 $\mathbf{v}^n$。
 
-整个方法的流程示意图如下：
+整个方法的流程示意图如下，鼓励大家在通过本文档了解基本思想后，自己阅读原论文获得更全面的理解。
 
 <div  align="center">    
  <img src="../images/liu13-pipeline.png" style="zoom:100%" />
