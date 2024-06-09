@@ -1,6 +1,6 @@
 #set text(font: ("linux libertine", "Source Han Serif SC", "Source Han Serif"))
 
-#align(center)[
+#align(right+horizon)[
   #image("imgs/front.png")
 
   = MMD / Unknown Mother Goose / 卡通渲染测试
@@ -13,6 +13,8 @@
 
   06 陈冠宇
 ]
+
+#pagebreak()
 
 == 简介
 
@@ -54,6 +56,8 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
 在 2024 年, Alembic 格式已经被广泛使用, 例如在电影制作中, 动画片制作中, 甚至是游戏开发中都可以看到 Alembic 格式的身影.
 
+#pagebreak(weak: true)
+
 == 任务
 
 === Stage 1.物理解算
@@ -62,7 +66,9 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
 + Nanoem <#link("https://github.com/hkrn/nanoem")> Nanoem 是一款开源 (MIT License) 的 MMD 替代品, 虽然功能不尽相同, 但是作者实现了大部分 MMD 本体的功能, 并且项目代码开源, 可以在此基础上添加导出 Alembic 文件的功能, 并且适当改进其物理碰撞的算法
 
-  #image("imgs/nanoem.png")
+  #align(center)[
+    #image("imgs/nanoem.png", width: 80%)
+  ]
 
 + 改进 mmd_tools 插件对 Blender 4.1 的支持, 具体表现为在 Blender 4.1 上烘焙物理时容易发生内存溢出的问题, 读写文件、修改动作时容易出现错误
 
@@ -86,13 +92,9 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
 === Stage 3. 后期制作
 
-一个优秀的 MMD 视频不仅仅是模型、动作的堆砌, 后期制作需要完成以下内容:
+一个优秀的 MMD 视频不仅仅是模型、动作的堆砌, 后期制作需要完成字幕, 特效, 调色等工作.
 
-- 字幕
-- 特效
-- 调色
-
-// #pagebreak(weak: true)
+#pagebreak(weak: true)
 
 == Stage 1. 物理解算
 
@@ -111,20 +113,20 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
   经过上面的处理后, 我们能正确导入到 Blender, 但是仍然存在一些解算的问题:
 
   #align(center)[
-    #image("imgs/bad_export.jpg", width: 50%)
+    #image("imgs/bad_export.jpg", width: 40%)
   ]
 
 + 物理解算的部分就是 Homework 10 的进阶版本, 在这里不再赘述, 经过一些处理, 最终可以得到正确的解算结果:
 
   #align(center)[
-    #image("imgs/good_export.jpg")
+    #image("imgs/good_export.jpg", width: 70%)
   ]
 
 + #link("https://www.bilibili.com/video/BV1PM4m1r7Nk?p=1")[这里] 存放着一个不含物理解算的结果(视频); #link("https://www.bilibili.com/video/BV1PM4m1r7Nk?p=2")[这里] 存放着正确导出物理解算的结果(视频).
 + 对 Nanoem 修改部分的代码已随报告打包, 代码不是很稳定, 推荐直接使用导出的 `.abc` 文件.
   // , 这些代码目前只适配 macOS 平台 (用到 Metal API), 今年晚些时候会整理成 PR 提交给上游.
 
-// #pagebreak(weak: true)
+#pagebreak(weak: true)
 
 == Stage 2. 卡通渲染
 
@@ -134,11 +136,28 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
 + 使用已经停止支持的 Blender 2.9 版本导入 `.abc`, 依次选择 `File -> Import -> Alembic (.abc)`, 选择导入的文件即可, 由于 `.pmx` 标准问题, 导入时应该选择 `0.08` 的缩放比例.
 
+  #align(center)[
+    #image("imgs/blender-import-abc-menu.png", width: 40%)
+    #image("imgs/blender-import-abc-window.png", width: 80%)
+  ]
+
 + 按空格键播放动画, 确认导入的动画效果正确.
+
+  #align(center)[
+    #image("imgs/blender-import-abc-test.png")
+  ]
 
 + 将导入的 mesh 合并到一个 Collection 下, 方便复用.
 
+  #align(center)[
+    #image("imgs/blender-import-abc-collection.png", width: 30%)
+  ]
+
 + 导出的 `.abc` 文件不包含颜色信息, 但是我们的导出工具已经将材质贴图一并输出到 `out/` 目录下, 打开这个目录, 分别创建三个 shader, 对应三张材质贴图. UV 信息应该正确包含在 `.abc` 导出的结果中, 只需要将这些 shader 对应到 mesh 上即可.
+
+  #align(center)[
+    #image("imgs/blender-import-abc-shader.png")
+  ]
 
 === 主场景
 
@@ -146,7 +165,17 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
 + 追加人物模型到当前场景, 依次选择 `File -> Append -> Object -> Collection`, 选择导入的 Collection 即可.
 
+  #align(center)[
+    #image("imgs/blender-2nd-import.png", width: 30%)
+  ]
+
 + 按空格键播放动画, 确认导入的动画效果正确.
+
++ 在此基础上添加场景, 确认相对位置正确.
+
+  #align(center)[
+    #image("imgs/blender-main-scene.png")
+  ]
 
 === 卡通渲染管线
 
@@ -158,11 +187,19 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
   + 几何勾线:
 
+    #align(center)[
+      #image("imgs/blender-gs-stroke-demo.png", width: 50%)
+    ]
+
     大致思路: 使用法线将模型挤出一定距离, 用于勾线的渲染. 这种方法性能很好, 可以控制粗细 (进而可以设置勾线粗细的远近效果), 但是无法处理模型内部的勾线.
 
     在 Blender 中, 我们可以使用一个几何着色器来实现这一效果:
 
-    // demo
+    #image("imgs/blender-gs-stroke.png")
+
+    在挤出之后, 需要对模型做一些细微的设置:
+
+    #image("imgs/blender-gs-stroke-main.png")
 
   + 资源勾线:
 
@@ -170,13 +207,37 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
     事实上, 这次我们选用的模型, 由于实际上是游戏资源的拆包, 可以看出部分模型的勾线是直接包含在贴图中的.
 
-    // demo
+    #align(center)[
+      #image("imgs/blender-asset-stroke.png", width: 50%)
+    ]
 
     对游戏开发而言, 额外的资产意味着额外的工作量, 但是为应对手机等环境, 这种方法仍然是一种有效的选择.
 
+  + 菲涅耳勾线:
+
+    大致思路: 在模型表面根据法线角度计算勾线, 这种方法可以很好的处理模型内部的勾线, 但是对于模型表面的勾线控制较差.
+
+    #align(center)[
+      #image("imgs/blender-fresnel-stroke-demo.png")
+    ]
+
+    在 Blender 中, 我们可以使用一个菲涅耳着色器来实现这一效果:
+
+    #image("imgs/blender-fresnel-stroke.png")
+
+    此方法的缺点是, 相机接近模型时, 由于精度问题, 会出现不同程度的渲染错误:
+
+    #image("imgs/blender-fresnel-stroke-failure-demo.png")
+
   + 屏幕空间勾线:
 
-    大致思路: 在屏幕空间中计算勾线, 一般可以用 深度 + 法线等数据进行边缘查找, 但这种方式对线条的控制较差, 无法控制勾线的粗细.
+    大致思路: 在屏幕空间中计算勾线, 一般可以用 深度 + 法线等数据进行边缘查找.
+
+    Blender 中的 FreeStyle 是一种基于屏幕空间的勾线渲染方式:
+
+    #align(center)[
+      #image("imgs/blender-freestyle-enable.png", width: 30%)
+    ]
 
 + 卡通着色
 
@@ -187,11 +248,41 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
   - 阴影过渡
   - 阴影颜色
 
+  首先我们来实现二分光照模型:
+
+  #align(center)[
+    #image("imgs/blender-toon-shading.png")
+  ]
+
+  接下来与贴图结合:
+
+  #align(center)[
+    #image("imgs/blender-toon-shading-processing.png")
+  ]
+
+  计算高光:
+
+  #image("imgs/blender-highlight.png")
+
+  #image("imgs/blender-highlight-2.png")
+
+  边缘光的计算:
+
+  #image("imgs/blender-edge-light.png")
+
+  #image("imgs/blender-edge-light-2.png")
+
 + 动画效果
 
   部分三渲二效果为追求和手绘动画的一致性, 会进行抽帧等处理, 但是这种处理对于 MMD 动画来说, 会导致动作不连续, 所以我们不推荐这种处理方式.
 
   但是我们同样可以通过分别渲染场景和人物, 人物动画一拍二, 背景一拍一的方式来实现类似的效果.
+
+结合上面的内容, 我们可以得到 Blender 渲染的效果:
+
+#image("imgs/blender-output.png")
+
+#pagebreak(weak: true)
 
 == Stage 3. 后期制作
 
@@ -205,5 +296,36 @@ Alembic <#link("https://en.wikipedia.org/wiki/Alembic_(computer_graphics)")> 是
 
 在 Blender 中实现上述输出的一个技巧是, 关闭场景建模, 将雾场通道渲染到输出:
 
-// demo
+#align(center)[
+  #image("imgs/fog.png", width: 30%)
+]
 
+在合成节点中输出:
+
+#align(center)[
+  #image("imgs/fog-node.png", width: 60%)
+]
+
+== 分工
+
+- 马天开: 负责 Blender 渲染部分, 包括卡通勾线、卡通着色等效果的实现, 以及后期制作的部分.
+
+- 陈冠宇: 负责前期调研, Nanoem 的改进, 包括 Alembic 文件的导出, 物理解算等部分.
+
+== 感想
+
++ 通过本次作业, 小组成员首次接触了 MMD 制作的流程, 深入学习使用了 Blender 软件, 了解了卡通渲染的一些方法, 也对 Alembic 格式有了更深入的了解.
+
++ 小组成员的团队协作能力得到了锻炼, 尤其在分工合作、任务分配等方面.
+
+== 不足
+
++ 由于时间关系, 我们没有对 Nanoem 的代码进行更深入的改进
+
++ Blender 素材整理较为混乱, 技巧性不足
+
++ 后期效果可以更加完善
+
+== 致谢
+
+特别感谢刘老师和助教们的指导和付出, 感谢 MMD 社区中分享模型、动作的作者们.
